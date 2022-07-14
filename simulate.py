@@ -8,7 +8,7 @@ pA = 0.5
 # Success rate of B
 pB = 0.5 + epsilon
 
-# Simple belief-updating conditionalization using Baye's rule
+# Simple belief-updating conditionalization using Bayes' rule
 #                 P(E|H)P(H)
 # P(H|E) = -------------------------
 #          P(E|H)P(H) + P(E|~H)P(~H)
@@ -20,6 +20,8 @@ def strictConditionalization(credence, result):
     pnotH  = 1 - pH                                # P(~H)
     return (pEH*pH)/(pEH*pH + pEnotH*pnotH)
 
+# Jeffrey's rule:
+# P_f(H) = P_i(H|E) * P_f(E) + P_i(H|~E) * P_f(~E)
 def jeffreyConditionalization():
     return
 
@@ -36,11 +38,13 @@ class Agent:
         else:
             # Otherwise randomly initialize along a uniform distribution
             self.credence = np.random.rand()
+
         # Belief-updating function
         if conditionalization == 'strict':
             self.conditionalization = strictConditionalization
         elif conditionalization == 'jeffrey':
             self.conditionalization = jeffreyConditionalization
+
         # Most recent pull result, used for sharing with other agents 
         self.pullResult = (None,None)
         # List of neighbors
@@ -119,10 +123,15 @@ class EpistemicNetwork:
             self.edges = [(i,j) for i in range(self.n_agents)\
                                 for j in range(self.n_agents)\
                                 if i!=j ]
-            # Build it out!
-            self.buildFromEdges()
+        elif self.structure == 'cycle':
+            highestIndex = self.n_agents - 1
+            forward = [(i,i+1) for i in range(highestIndex)] + [(highestIndex,0)]
+            backward = [(r,l) for (l,r) in forward]
+            self.edges = forward + backward
         else:
             raise f'Undefined structure: {self.structure}. Try: complete'
+        # Build it out!
+        self.buildFromEdges()
             
 
     # Construct the network from a manual list of edges
@@ -171,12 +180,11 @@ def main():
             Agent(),
             Agent(),
             Agent()
-          ], structure='complete')
+          ], structure='cycle')
     print(net)
     for i in range(100):
         net.update()
     print(net)
-
 
 if __name__ == '__main__':
     main()
