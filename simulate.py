@@ -1,12 +1,18 @@
 import numpy as np
 
-# Unknown value
-epsilon = 0.3
-
 # Success rate of A
 pA = 0.5
 # Success rate of B
+epsilon = 0.1
 pB = 0.5 + epsilon
+
+# Strength of mistrust
+m = 2
+
+# TODO: Some serious notation rectification
+# P_f(~E) is misleading (it should just be the complement of P_f(E) 
+# The notation between Bayes' rule and Weatherall & O'Connors notation is
+# also incompatible (e.g. Bayes' P(E|H) is the same as W&O's P_i(E))
 
 # Simple belief-updating conditionalization using Bayes' rule
 #                 P(E|H)P(H)
@@ -20,16 +26,30 @@ def strictConditionalization(credence, result):
     pnotH  = 1 - pH                                # P(~H)
     return (pEH*pH)/(pEH*pH + pEnotH*pnotH)
 
+def other(result):
+    return 'fail' if result == 'success' else 'success'
+
+# Equation (1) in Weatherall & O'Connor 2021
+# P_f(E)(d) = max({1 - d * m * (1 - P_i(E)), 0})
+def mistrust(result, diff):
+    PiE = (pB if result == 'success' else 1-pB) # P_i(E)
+    return np.max(1 - (diff * m * (1 - PiE)), 0)
+
 # Jeffrey's rule:
 # P_f(H) = P_i(H|E) * P_f(E) + P_i(H|~E) * P_f(~E)
-def jeffreyConditionalization():
-    return
+def jeffreyConditionalization(credence, result, diff=0):
+    piHE    = strictConditionalization(credence, result)        # P_i(H|E)
+    piHnotE = strictConditionalization(credence, other(result)) # P_i(H|~E)
+    pfE     = mistrust(result, diff)                            # P_f(E)
+    pfnotE  = 1 - pfE                                           # P_f(~E)
+    return (piHE*pfE) + (piHnotE*pfnotE)
+
 
 # Base Agent class
 class Agent:
     def __init__(self, 
             initial_credence = None,
-            conditionalization = 'strict'
+            conditionalization = 'jeffrey'
         ):
         # Credence := Agent's belief of the probability that B is correct
         if initial_credence:
@@ -60,8 +80,8 @@ class Agent:
                f'Last pull: {self.pullResult}'
 
     # Update credence given the result of a B arm pull
-    def update_credence(self, result, verbose):
-        self.credence = self.conditionalization(self.credence, result)
+    def update_credence(self, result, diff, verbose):
+        self.credence = self.conditionalization(self.credence, result, diff=diff)
         if verbose:
             print(f'\tNew credence: {self.credence}')
 
@@ -77,18 +97,10 @@ class Agent:
             print(f'\tResult: {result}')
         # If we pulled arm B, we have evidence to update our credence for B
         if arm == 'B':
-            self.update_credence(result, verbose)
+            self.update_credence(result, 0, verbose)
         # Update pullResult to share with other agents
         self.pullResult = (arm,result)
 
-    # Fetch pull results from all neighbors and update credence
-    def update_on_neighbors(self):
-        # Get the round's pull results from each neighbor
-        for neighbor in self.neighbors:
-            arm,result = neighbor.pullResult
-            # Update self credence if neighbor pulled B
-            if arm == 'B':
-                self.update_credence(result)
 
 class EpistemicNetwork:
     # Initialize with a list of agents and specified structure
@@ -166,7 +178,8 @@ class EpistemicNetwork:
                 if nPull == 'B':
                     if verbose:
                         print(f"\tUpdating credence on Agent {n}'s result")
-                    self.agents[i].update_credence(nResult, verbose)
+                    difference = np.abs(self.agents[i].credence - self.agents[n].credence)
+                    self.agents[i].update_credence(nResult, difference, verbose)
         if verbose:
             print('')
 
@@ -178,11 +191,10 @@ def main():
             Agent(),
             Agent(),
             Agent(),
-            Agent(),
             Agent()
           ], structure='cycle')
     print(net)
-    for i in range(100):
+    for i in range(1000):
         net.update()
     print(net)
 
