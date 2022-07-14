@@ -47,10 +47,7 @@ def jeffreyConditionalization(credence, result, diff=0):
 
 # Base Agent class
 class Agent:
-    def __init__(self, 
-            initial_credence = None,
-            conditionalization = 'jeffrey'
-        ):
+    def __init__(self, initial_credence=None, conditionalization='jeffrey'):
         # Credence := Agent's belief of the probability that B is correct
         if initial_credence:
             # Set it to this if specified
@@ -72,9 +69,10 @@ class Agent:
         # Agents know their own number (unless they're not in a network,
         # in which case they are just an orphan)
         self.number = '(orphan)'
+        self.type   = 'AGENT'
 
     def __str__(self):
-        return f'AGENT {self.number}\n'+\
+        return f'AGENT {self.number}: {self.type}\n'+\
                f'Credence: {self.credence}\n' +\
                f'Neighbors: {self.neighbors}\n' +\
                f'Last pull: {self.pullResult}'
@@ -101,6 +99,25 @@ class Agent:
         # Update pullResult to share with other agents
         self.pullResult = (arm,result)
 
+
+# Scientist behavior is implemented in the default agent class
+class Scientist(Agent):
+    def __init__(self, initial_credence=None):
+        Agent.__init__(self, initial_credence=initial_credence)
+        self.type = 'Scientist'
+
+
+# Policymakers work the same as scientists, but don't collect their own
+# evidence.
+class Policymaker(Agent):
+    def __init__(self, initial_credence=None):
+        Agent.__init__(self, initial_credence=initial_credence)
+        self.type = 'Policymaker'
+
+    # Policymakers don't gather evidence
+    def update_on_self(self):
+        pass
+ 
 
 class EpistemicNetwork:
     # Initialize with a list of agents and specified structure
@@ -169,7 +186,7 @@ class EpistemicNetwork:
             self.agents[i].update_on_self(verbose)
         if verbose:
             print('========[NEIGHBOR-UPDATING]============')
-        # Then, have agents incorporate neighbors results into their credence
+        # Then, have agents incorporate neighbors' results into their credence
         for i in range(self.n_agents):
             if verbose:
                 print(f'AGENT {i}:')
@@ -186,17 +203,19 @@ class EpistemicNetwork:
 
 
 def main():
-    net = EpistemicNetwork([
-            Agent(),
-            Agent(),
-            Agent(),
-            Agent(),
-            Agent()
-          ], structure='cycle')
-    print(net)
-    for i in range(1000):
-        net.update()
-    print(net)
+    a = Policymaker()
+    a.test()
+    #net = EpistemicNetwork([
+    #        Agent(),
+    #        Agent(),
+    #        Agent(),
+    #        Agent(),
+    #        Agent()
+    #      ], structure='cycle')
+    #print(net)
+    #for i in range(1000):
+    #    net.update()
+    #print(net)
 
 if __name__ == '__main__':
     main()
