@@ -203,10 +203,10 @@ class EpistemicNetwork:
     
     # Have agent i update their credence using neighbor's evidence
     def neighborUpdate(self, i, neighbor, verbose):
+        if verbose:
+            print(f"\tUpdating credence on Agent {n}'s results")
         for nPull, nResult in self.agents[neighbor].pullResults:
             if nPull == 'B':
-                if verbose:
-                    print(f"\tUpdating credence on Agent {n}'s result")
                 diff = np.abs(
                         self.agents[i].credence - self.agents[neighbor].credence
                         )
