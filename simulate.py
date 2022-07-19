@@ -1,13 +1,18 @@
 import numpy as np
 
+EPSILON = 0.1
+
+# Strength of mistrust
+MISTRUST = 2
+
+# Number of arm pulls per round (n)
+N_PULLS = 1
+
 # Success rate of A
 pA = 0.5
 # Success rate of B
-epsilon = 0.1
-pB = 0.5 + epsilon
+pB = 0.5 + EPSILON
 
-# Strength of mistrust
-m = 2
 
 # TODO: Some serious notation rectification
 # P_f(~E) is misleading (it should just be the complement of P_f(E) 
@@ -33,7 +38,7 @@ def other(result):
 # P_f(E)(d) = max({1 - d * m * (1 - P_i(E)), 0})
 def mistrust(result, diff):
     PiE = (pB if result == 'success' else 1-pB) # P_i(E)
-    return np.max(1 - (diff * m * (1 - PiE)), 0)
+    return np.max(1 - (diff * MISTRUST * (1 - PiE)), 0)
 
 # Jeffrey's rule:
 # P_f(H) = P_i(H|E) * P_f(E) + P_i(H|~E) * P_f(~E)
@@ -62,8 +67,8 @@ class Agent:
         elif conditionalization == 'jeffrey':
             self.conditionalization = jeffreyConditionalization
 
-        # Most recent pull result, used for sharing with other agents 
-        self.pullResult = (None,None)
+        # Most recent pull results, used for sharing with other agents 
+        self.pullResults = [(None,None) for i in range(N_PULLS)]
         # List of neighbors
         self.neighbors = []
         # Agents know their own number (unless they're not in a network,
@@ -74,8 +79,8 @@ class Agent:
     def __str__(self):
         return f'AGENT {self.number}: {self.type}\n'+\
                f'Credence: {self.credence}\n' +\
-               f'Neighbors: {self.neighbors}\n' +\
-               f'Last pull: {self.pullResult}'
+               f'Neighbors: {self.neighbors}\n'
+               #f'Last pulls: {self.pullResults}'
 
     # Update credence given the result of a B arm pull
     def update_credence(self, result, diff, verbose):
@@ -85,19 +90,19 @@ class Agent:
 
     # Choose an arm to pull, pull it, and update credence if B was pulled
     def update_on_self(self, verbose):
-        # Select arm based on credence
-        arm = 'A' if self.credence < 0.5 else 'B'
-        # Pull the arm
-        armSuccessRate = pA if arm == 'A' else pB
-        result = 'success' if np.random.rand() < armSuccessRate else 'fail'
-        if verbose:
-            print(f'\tPulling arm {arm}')
-            print(f'\tResult: {result}')
-        # If we pulled arm B, we have evidence to update our credence for B
-        if arm == 'B':
-            self.update_credence(result, 0, verbose)
-        # Update pullResult to share with other agents
-        self.pullResult = (arm,result)
+        # Reset pull results
+        self.pullResults = []
+        for i in range(N_PULLS):
+            # Select arm based on credence
+            arm = 'A' if self.credence < 0.5 else 'B'
+            # Pull the arm
+            armSuccessRate = pA if arm == 'A' else pB
+            result = 'success' if np.random.rand() < armSuccessRate else 'fail'
+            # If we pulled arm B, we have evidence to update our credence for B
+            if arm == 'B':
+                self.update_credence(result, 0, verbose)
+            # Update pullResults to share with other agents
+            self.pullResults.append((arm,result))
 
 
 # Scientist behavior is implemented in the default agent class
@@ -178,7 +183,6 @@ class EpistemicNetwork:
     def update(self, verbose=False):
         if verbose:
             print('========[SELF-UPDATING]============')
-
         # First, have every agent run their self updates
         for i in range(self.n_agents):
             if verbose:
@@ -190,32 +194,32 @@ class EpistemicNetwork:
         for i in range(self.n_agents):
             if verbose:
                 print(f'AGENT {i}:')
-            for n in self.agents[i].neighbors:
-                nPull, nResult = self.agents[n].pullResult
-                if nPull == 'B':
-                    if verbose:
-                        print(f"\tUpdating credence on Agent {n}'s result")
-                    difference = np.abs(self.agents[i].credence - self.agents[n].credence)
-                    self.agents[i].update_credence(nResult, difference, verbose)
+            for neighbor in self.agents[i].neighbors:
+                for nPull, nResult in self.agents[neighbor].pullResults:
+                    if nPull == 'B':
+                        if verbose:
+                            print(f"\tUpdating credence on Agent {n}'s result")
+                        difference = np.abs(self.agents[i].credence - self.agents[neighbor].credence)
+                        self.agents[i].update_credence(nResult, difference, verbose)
         if verbose:
             print('')
 
 
 
 def main():
-    a = Policymaker()
-    a.test()
-    #net = EpistemicNetwork([
-    #        Agent(),
-    #        Agent(),
-    #        Agent(),
-    #        Agent(),
-    #        Agent()
-    #      ], structure='cycle')
-    #print(net)
-    #for i in range(1000):
-    #    net.update()
-    #print(net)
+    global N_PULLS
+    N_PULLS = 10
+    net = EpistemicNetwork([
+            Agent(),
+            Agent(),
+            Agent(),
+            Agent(),
+            Agent()
+          ], structure='cycle')
+    print(net)
+    for i in range(10):
+        net.update()
+    print(net)
 
 if __name__ == '__main__':
     main()
