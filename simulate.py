@@ -244,20 +244,40 @@ def decided(agent):
 def finished(net):
     return False not in [decided(a) for a in net.agents]
 
-def main():
-    global N_PULLS
-    N_PULLS = 10
-    net = EpistemicNetwork([
-            Agent(),
-            Agent(),
-            Agent(),
-            Agent(),
-            Agent()
-          ], structure='cycle')
-    i = 0
+def simulate(epsilon=0.01, n_pulls=50, n_agents=20, m_mistrust=2):
+    global N_PULLS, EPSILON, MISTRUST
+    EPSILON  = epsilon
+    N_PULLS  = n_pulls
+    MISTRUST = m_mistrust
+
+    agents = [Agent(initial_credences=[0.0, np.random.rand()]) for _ in range(10)]
+    agents += [Agent(initial_credences=[1.0, np.random.rand()]) for _ in range(10)]
+
+    net = EpistemicNetwork(agents, structure='complete')
     while not finished(net):
         net.update()
-        i += 1
+
+    f = open('results.csv','a')
+    f.write(f'{m_mistrust};' + ';'.join(str(net.agents[i].credences) for i in range(20)) + '\n')
+    
+
+def main():
+    f = open('results.csv','w')
+    f.write('m_mistrust;' + ';'.join(f'agent_{i}' for i in range(20)) + '\n')
+    f.close()
+
+    def run(m):
+        for i in range(10):
+            print(f'Mistrust {m} run {i}')
+            simulate(m_mistrust=m)
+    run(0.0)
+    run(0.75)
+    run(1.0)
+    run(1.05)
+    run(1.4)
+    run(2.0)
+
+
 
 if __name__ == '__main__':
     main()
