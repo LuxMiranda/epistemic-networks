@@ -84,7 +84,7 @@ class Agent:
 
     # Update credence given the result of a B arm pull
     def update_credence(self, result, diff, verbose):
-        self.credence = self.conditionalization(self.credence, result, diff=diff)
+        self.credence = self.conditionalization(self.credence,result,diff=diff)
         if verbose:
             print(f'\tNew credence: {self.credence}')
 
@@ -159,11 +159,11 @@ class EpistemicNetwork:
                                 if i!=j ]
         elif self.structure == 'cycle':
             highestIndex = self.n_agents - 1
-            forward = [(i,i+1) for i in range(highestIndex)] + [(highestIndex,0)]
+            forward = [(i,i+1) for i in range(highestIndex)] +[(highestIndex,0)]
             backward = [(r,l) for (l,r) in forward]
             self.edges = forward + backward
         else:
-            raise f'Undefined structure: {self.structure}. Try: complete'
+            raise f'Undefined structure: {self.structure}. Try: complete, cycle'
         # Build it out!
         self.buildFromEdges()
             
@@ -179,28 +179,45 @@ class EpistemicNetwork:
                 if node == i:
                     self.agents[i].neighbors.append(neighbor)
 
-    # Run an update round
-    def update(self, verbose=False):
+
+    # Have agents pull their arms and update themselves
+    def selfUpdates(self, verbose):
         if verbose:
             print('========[SELF-UPDATING]============')
-        # First, have every agent run their self updates
         for i in range(self.n_agents):
             if verbose:
                 print(f'AGENT {i}:')
             self.agents[i].update_on_self(verbose)
+        return
+
+    # Have agents use neighbor's results to update their credences
+    def neighborUpdates(self, verbose):
         if verbose:
-            print('========[NEIGHBOR-UPDATING]============')
-        # Then, have agents incorporate neighbors' results into their credence
+             print('========[NEIGHBOR-UPDATING]============')
         for i in range(self.n_agents):
-            if verbose:
-                print(f'AGENT {i}:')
-            for neighbor in self.agents[i].neighbors:
-                for nPull, nResult in self.agents[neighbor].pullResults:
-                    if nPull == 'B':
-                        if verbose:
-                            print(f"\tUpdating credence on Agent {n}'s result")
-                        difference = np.abs(self.agents[i].credence - self.agents[neighbor].credence)
-                        self.agents[i].update_credence(nResult, difference, verbose)
+             if verbose:
+                 print(f'AGENT {i}:')
+             for neighbor in self.agents[i].neighbors:
+                self.neighborUpdate(i, neighbor, verbose)
+
+    
+    # Have agent i update their credence using neighbor's evidence
+    def neighborUpdate(self, i, neighbor, verbose):
+        for nPull, nResult in self.agents[neighbor].pullResults:
+            if nPull == 'B':
+                if verbose:
+                    print(f"\tUpdating credence on Agent {n}'s result")
+                diff = np.abs(
+                        self.agents[i].credence - self.agents[neighbor].credence
+                        )
+                self.agents[i].update_credence(nResult, diff, verbose)
+
+    # Run an update round
+    def update(self, verbose=False):
+        # First, have every agent run their self updates
+        self.selfUpdates(verbose)
+        # Then, have agents incorporate neighbors' results into their credence
+        self.neighborUpdates(verbose)
         if verbose:
             print('')
 
