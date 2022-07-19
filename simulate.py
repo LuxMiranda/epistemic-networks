@@ -8,6 +8,9 @@ MISTRUST = 2
 # Number of arm pulls per round (n)
 N_PULLS = 1
 
+# Number of different credences/beliefs
+N_CREDENCES = 2
+
 # Success rate of A
 pA = 0.5
 # Success rate of B
@@ -52,14 +55,14 @@ def jeffreyConditionalization(credence, result, diff=0):
 
 # Base Agent class
 class Agent:
-    def __init__(self, initial_credence=None, conditionalization='jeffrey'):
+    def __init__(self, initial_credences=None, conditionalization='jeffrey'):
         # Credence := Agent's belief of the probability that B is correct
-        if initial_credence:
+        if initial_credences:
             # Set it to this if specified
-            self.credence = initial_credence
+            self.credences = initial_credences
         else:
             # Otherwise randomly initialize along a uniform distribution
-            self.credence = np.random.rand()
+            self.credences = [np.random.rand() for _ in range(N_CREDENCES)]
 
         # Belief-updating function
         if conditionalization == 'strict':
@@ -68,7 +71,7 @@ class Agent:
             self.conditionalization = jeffreyConditionalization
 
         # Most recent pull results, used for sharing with other agents 
-        self.pullResults = [(None,None) for i in range(N_PULLS)]
+        self.pullResults = [[(None,None) for _ in range(N_PULLS)] for _ in range(N_CREDENCES)]
         # List of neighbors
         self.neighbors = []
         # Agents know their own number (unless they're not in a network,
@@ -78,31 +81,35 @@ class Agent:
 
     def __str__(self):
         return f'AGENT {self.number}: {self.type}\n'+\
-               f'Credence: {self.credence}\n' +\
+               f'Credences: {self.credences}\n' +\
                f'Neighbors: {self.neighbors}\n'
                #f'Last pulls: {self.pullResults}'
 
     # Update credence given the result of a B arm pull
-    def update_credence(self, result, diff, verbose):
-        self.credence = self.conditionalization(self.credence,result,diff=diff)
+    def update_credence(self, i, result, diff, verbose):
+        self.credences[i] = self.conditionalization(self.credences[i],result,diff=diff)
         if verbose:
-            print(f'\tNew credence: {self.credence}')
+            print(f'\tNew credence for hypothesis {i}: {self.credences[i]}')
 
     # Choose an arm to pull, pull it, and update credence if B was pulled
     def update_on_self(self, verbose):
         # Reset pull results
         self.pullResults = []
-        for i in range(N_PULLS):
-            # Select arm based on credence
-            arm = 'A' if self.credence < 0.5 else 'B'
-            # Pull the arm
-            armSuccessRate = pA if arm == 'A' else pB
-            result = 'success' if np.random.rand() < armSuccessRate else 'fail'
-            # If we pulled arm B, we have evidence to update our credence for B
-            if arm == 'B':
-                self.update_credence(result, 0, verbose)
-            # Update pullResults to share with other agents
-            self.pullResults.append((arm,result))
+        # For each credence
+        for i in range(N_CREDENCES):
+            self.pullResults.append([])
+            # Test the arm N_PULLS times
+            for _ in range(N_PULLS):
+                # Select arm based on credence
+                arm = 'A' if self.credences[i] < 0.5 else 'B'
+                # Pull the arm
+                armSuccessRate = pA if arm == 'A' else pB
+                result = 'success' if np.random.rand() < armSuccessRate else 'fail'
+                # If we pulled arm B, we have evidence to update our credence for B
+                if arm == 'B':
+                    self.update_credence(i, result, 0, verbose)
+                # Update pullResults to share with other agents
+                self.pullResults[i].append((arm,result))
 
 
 # Scientist behavior is implemented in the default agent class
@@ -129,6 +136,7 @@ class EpistemicNetwork:
     def __init__(self, agents, edges=None, structure=None):
         self.agents    = agents
         self.n_agents  = len(agents)
+        # Number of different credences/beliefs
         self.edges     = edges
         self.structure = structure
         self.buildNetwork()
@@ -200,17 +208,22 @@ class EpistemicNetwork:
              for neighbor in self.agents[i].neighbors:
                 self.neighborUpdate(i, neighbor, verbose)
 
-    
+    # Compute the trust distance between agents i and j
+    # as the euclidean distance between their credence vectors
+    def distance(self, i, j):
+        x = np.array(self.agents[i].credences)
+        y = np.array(self.agents[j].credences)
+        return np.linalg.norm(x-y)
+
     # Have agent i update their credence using neighbor's evidence
     def neighborUpdate(self, i, neighbor, verbose):
         if verbose:
             print(f"\tUpdating credence on Agent {n}'s results")
-        for nPull, nResult in self.agents[neighbor].pullResults:
-            if nPull == 'B':
-                diff = np.abs(
-                        self.agents[i].credence - self.agents[neighbor].credence
-                        )
-                self.agents[i].update_credence(nResult, diff, verbose)
+        for c in range(N_CREDENCES):
+            for nPull, nResult in self.agents[neighbor].pullResults[c]:
+                if nPull == 'B':
+                    diff = self.distance(i, neighbor)
+                    self.agents[i].update_credence(c, nResult, diff, verbose)
 
     # Run an update round
     def update(self, verbose=False):
@@ -234,7 +247,7 @@ def main():
             Agent()
           ], structure='cycle')
     print(net)
-    for i in range(10):
+    for i in range(1000):
         net.update()
     print(net)
 
