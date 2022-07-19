@@ -71,7 +71,8 @@ class Agent:
             self.conditionalization = jeffreyConditionalization
 
         # Most recent pull results, used for sharing with other agents 
-        self.pullResults = [[(None,None) for _ in range(N_PULLS)] for _ in range(N_CREDENCES)]
+        self.pullResults = [
+            [(None,None) for _ in range(N_PULLS)] for _ in range(N_CREDENCES)]
         # List of neighbors
         self.neighbors = []
         # Agents know their own number (unless they're not in a network,
@@ -82,12 +83,15 @@ class Agent:
     def __str__(self):
         return f'AGENT {self.number}: {self.type}\n'+\
                f'Credences: {self.credences}\n' +\
-               f'Neighbors: {self.neighbors}\n'
-               #f'Last pulls: {self.pullResults}'
+               f'Neighbors: {self.neighbors}\n' +\
+               f'Last pulls: {self.pullResults}'
 
     # Update credence given the result of a B arm pull
     def update_credence(self, i, result, diff, verbose):
-        self.credences[i] = self.conditionalization(self.credences[i],result,diff=diff)
+        self.credences[i] = self.conditionalization(
+                                    self.credences[i],
+                                    result,
+                                    diff=diff)
         if verbose:
             print(f'\tNew credence for hypothesis {i}: {self.credences[i]}')
 
@@ -102,14 +106,13 @@ class Agent:
             for _ in range(N_PULLS):
                 # Select arm based on credence
                 arm = 'A' if self.credences[i] < 0.5 else 'B'
-                # Pull the arm
-                armSuccessRate = pA if arm == 'A' else pB
-                result = 'success' if np.random.rand() < armSuccessRate else 'fail'
-                # If we pulled arm B, we have evidence to update our credence for B
                 if arm == 'B':
+                # Pull the arm
+                    armSuccessRate = pA if arm == 'A' else pB
+                    result = 'success' if np.random.rand() < armSuccessRate else 'fail'
                     self.update_credence(i, result, 0, verbose)
-                # Update pullResults to share with other agents
-                self.pullResults[i].append((arm,result))
+                    # Update pullResults to share with other agents
+                    self.pullResults[i].append((arm,result))
 
 
 # Scientist behavior is implemented in the default agent class
@@ -235,6 +238,11 @@ class EpistemicNetwork:
             print('')
 
 
+def decided(agent):
+    return False not in [c < 0.5 or c > 0.99 for c in agent.credences]
+
+def finished(net):
+    return False not in [decided(a) for a in net.agents]
 
 def main():
     global N_PULLS
@@ -246,10 +254,10 @@ def main():
             Agent(),
             Agent()
           ], structure='cycle')
-    print(net)
-    for i in range(1000):
+    i = 0
+    while not finished(net):
         net.update()
-    print(net)
+        i += 1
 
 if __name__ == '__main__':
     main()
