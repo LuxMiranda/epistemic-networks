@@ -9,7 +9,7 @@ import numpy as np
 #                 P(E|H)P(H)
 # P(H|E) = -------------------------
 #          P(E|H)P(H) + P(E|~H)P(~H)
-def strictConditionalization(credence, result, diff=0, pA=0.5, pB=0.51,m_mistrust=2):
+def strictConditionalization(credence, result, diff, pA, pB, m_mistrust):
     # Update our credence for B in light of the new evidence with Bayes rule
     pEH    = (pB if result == 'success' else 1-pB) # P(E|H)
     pH     = credence                              # P(H)
@@ -22,17 +22,17 @@ def other(result):
 
 # Equation (1) in Weatherall & O'Connor 2021
 # P_f(E)(d) = max({1 - d * m * (1 - P_i(E)), 0})
-def mistrust(result, diff, pA=None, pB=0.51, m_mistrust=2):
+def mistrust(result, diff, pB, m_mistrust):
     PiE = (pB if result == 'success' else 1-pB) # P_i(E)
     return np.max(1 - (diff * m_mistrust * (1 - PiE)), 0)
 
 # Jeffrey's rule:
 # P_f(H) = P_i(H|E) * P_f(E) + P_i(H|~E) * P_f(~E)
-def jeffreyConditionalization(credence, result, diff=0, pA=0.5, pB=0.51,m_mistrust=2):
-    piHE    = strictConditionalization(credence, result, pA=pA, pB=pB)        # P_i(H|E)
-    piHnotE = strictConditionalization(credence, other(result), pA=pA, pB=pB) # P_i(H|~E)
-    pfE     = mistrust(result, diff,pA=pA,pB=pB,m_mistrust=m_mistrust)        # P_f(E)
-    pfnotE  = 1 - pfE                                                         # P_f(~E)
+def jeffreyConditionalization(credence, result, diff, pA, pB,m_mistrust):
+    piHE    = strictConditionalization(credence, result, diff, pA, pB, m_mistrust)        # P_i(H|E)
+    piHnotE = strictConditionalization(credence, other(result), diff, pA, pB, m_mistrust) # P_i(H|~E)
+    pfE     = mistrust(result, diff, pB, m_mistrust)                                      # P_f(E)
+    pfnotE  = 1 - pfE                                                                     # P_f(~E)
     return (piHE*pfE) + (piHnotE*pfnotE)
 
 
@@ -90,10 +90,10 @@ class Agent:
         self.credences[i] = self.conditionalization(
                                     self.credences[i],
                                     result,
-                                    diff=diff,
-                                    pA=self.pA,
-                                    pB=self.pB,
-                                    m_mistrust=self.m_mistrust)
+                                    diff,
+                                    self.pA,
+                                    self.pB,
+                                    self.m_mistrust)
         if verbose:
             print(f'\tNew credence for hypothesis {i}: {self.credences[i]}')
 
@@ -250,6 +250,16 @@ class EpistemicNetwork:
             'm_mistrust' : self.agents[0].m_mistrust,
             'agent_credences' : [self.agents[i].credences for i in range(self.n_agents)]
         }
+
+    def to_bare_csv_line(self):
+        data = self.to_dict()
+        return '{},{},{},{},{}\n'.format(
+            data['epsilon'],
+            data['n_pulls'],
+            data['n_agents'],
+            data['m_mistrust'],
+            data['agent_credences']
+        )
 
 
 def decided(agent):
