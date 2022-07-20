@@ -1,18 +1,34 @@
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 
-data = pd.read_csv('results.csv',sep=';')
-print(data)
+data = pd.read_csv('results_and_figures/weatherall_oconnor_2021_fig_3/results.csv')
 
-def getOutcome(agents):
-    if False not in [a[1] > 0.99 for a in agents]:
-        return 'TC'
-    if False not in [a[1] < 0.5 for a in agents]:
-        return 'FC'
-    else:
-        return 'P'
+def getOutcome(credences):
+    credences = eval(credences)
+    if False not in [c[1] > 0.99 for c in credences]:
+        return 'True consensus'
+    if False not in [c[1] < 0.5 for c in credences]:
+        return 'False consensus'
+    return 'Polarization'
 
-for i, row in data.iterrows():
-    agents = [eval(c) for c in list(row)[1:]]
-    data.at[i, 'Outcome'] = getOutcome(agents)
+data['outcome'] = data['credences'].apply(getOutcome)
+data = data[['m_mistrust','outcome']]
 
-print(data)
+print(data[data['outcome'].apply(lambda x : x == 'False consensus')])
+
+data = data[data['outcome'].isin(['True consensus','Polarization'])]
+
+data = data.groupby(['outcome','m_mistrust']).size().reset_index(name='Count')
+data['Percent'] = data['Count'].apply(lambda x : x / 100)
+
+sns.lineplot(data=data[data['outcome'].isin(['True consensus'])],
+    x='m_mistrust', y='Percent',
+    marker='$♥$', markersize=10,label='True consensus')
+
+sns.lineplot(data=data[data['outcome'].isin(['Polarization'])],
+    x='m_mistrust', y='Percent',
+    marker='X', markersize=10,label='Polarization')
+
+plt.legend()
+plt.show()
