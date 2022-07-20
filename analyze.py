@@ -1,6 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import matplotlib.ticker as mtick
 
 data = pd.read_csv('results_and_figures/weatherall_oconnor_2021_fig_3/results.csv')
 
@@ -26,9 +27,14 @@ sns.lineplot(data=data[data['outcome'].isin(['True consensus'])],
     x='m_mistrust', y='Percent',
     marker='$♥$', markersize=10,label='True consensus')
 
-sns.lineplot(data=data[data['outcome'].isin(['Polarization'])],
+
+ax = sns.lineplot(data=data[data['outcome'].isin(['Polarization'])],
     x='m_mistrust', y='Percent',
     marker='X', markersize=10,label='Polarization')
 
+ax.yaxis.set_major_formatter(mtick.PercentFormatter(1.0))
+plt.ylim(top=1.05)
+plt.xlabel('Mistrust ($m$)')
+plt.ylabel('Percentage of outcomes')
 plt.legend()
 plt.show()
