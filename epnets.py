@@ -17,6 +17,8 @@ pA = 0.5
 # Success rate of B
 pB = 0.5 + EPSILON
 
+ANTIUPDATING = True
+
 MUTEX = Lock()
 
 
@@ -44,7 +46,8 @@ def other(result):
 # P_f(E)(d) = max({1 - d * m * (1 - P_i(E)), 0})
 def mistrust(result, diff):
     PiE = (pB if result == 'success' else 1-pB) # P_i(E)
-    return np.max(1 - (diff * MISTRUST * (1 - PiE)), 0)
+    minimum = 0.0 if ANTIUPDATING else PiE
+    return np.max([1.0 - (diff * MISTRUST * (1.0 - PiE)), minimum])
 
 # Jeffrey's rule:
 # P_f(H) = P_i(H|E) * P_f(E) + P_i(H|~E) * P_f(~E)
@@ -58,11 +61,18 @@ def jeffreyConditionalization(credence, result, diff=0):
 
 # Base Agent class
 class Agent:
-    def __init__(self, initial_credences=None, conditionalization='jeffrey'):
+    def __init__(self, initial_credences=None,
+                       n_credences=2,
+                       n_pulls=50,
+                       conditionalization='jeffrey'):
+        global N_CREDENCES, N_PULLS
+        N_CREDENCES = n_credences
+        N_PULLS = n_pulls
         # Credence := Agent's belief of the probability that B is correct
         if initial_credences:
             # Set it to this if specified
             self.credences = initial_credences
+            N_CREDENCES = len(initial_credences)
         else:
             # Otherwise randomly initialize along a uniform distribution
             self.credences = [np.random.rand() for _ in range(N_CREDENCES)]
@@ -108,7 +118,12 @@ class Agent:
             # Test the arm N_PULLS times
             for _ in range(N_PULLS):
                 # Select arm based on credence
-                arm = 'A' if self.credences[i] < 0.5 else 'B'
+                try:
+                    arm = 'A' if self.credences[i] < 0.5 else 'B'
+                except IndexError:
+                    print('Credences:')
+                    print(self.credences)
+                    exit()
                 if arm == 'B':
                 # Pull the arm
                     armSuccessRate = pA if arm == 'A' else pB
@@ -117,6 +132,10 @@ class Agent:
                     # Update pullResults to share with other agents
                     self.pullResults[i].append((arm,result))
 
+
+# Makes n_agents default agents
+def make_agents(n_agents=50, n_credences=2, n_pulls=50):
+    return [Agent(n_credences=n_credences, n_pulls=n_pulls) for _ in range(n_agents)]
 
 # Scientist behavior is implemented in the default agent class
 class Scientist(Agent):
@@ -251,13 +270,12 @@ def decided(agent):
 def finished(net):
     return False not in [decided(a) for a in net.agents]
 
-def simulate(agents, epsilon=0.01, n_pulls=50, m_mistrust=2, n_credences=2,
-        results_file='results.csv'):
-    global N_PULLS, EPSILON, MISTRUST, N_CREDENCES
+def simulate(agents, epsilon=0.01, m_mistrust=2,
+        results_file='results.csv', antiupdating=True):
+    global EPSILON, MISTRUST, ANTIUPDATING
     EPSILON  = epsilon
-    N_PULLS  = n_pulls
     MISTRUST = m_mistrust
-    N_CREDENCES = n_credences
+    ANTIUPDATING = antiupdating
     net = EpistemicNetwork(agents, structure='complete')
     while not finished(net):
         net.update()
