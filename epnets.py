@@ -161,7 +161,7 @@ class EpistemicNetwork:
     def __init__(self, agents, edges=None, structure=None):
         self.agents    = agents
         self.n_agents  = len(agents)
-        self.outcome   = None
+        # Number of different credences/beliefs
         self.edges     = edges
         self.structure = structure
         self.buildNetwork()
@@ -260,95 +260,25 @@ class EpistemicNetwork:
             print('')
 
     def to_bare_csv_line(self):
-        return '{},{},"{}"\n'.format(MISTRUST, self.outcome,
+        return '{},"{}"\n'.format(MISTRUST, 
                 [self.agents[i].credences for i in range(self.n_agents)])
 
-# If any agent has a 0.5 <= credence <= 0.99, the simulation is not finished
-def unfinished(net):
-    for agent in net.agents:
-        for credence in agent.credences:
-            if 0.5 <= credence and credence <= 0.99:
-                return True
-    return False
 
-def true_consensus(net):
-    all_true  = lambda agent : [c > 0.99 for c in agent.credences]
-    return False not in [all_true(agent) for agent in net.agents]
+def decided(agent):
+    return False not in [c < 0.5 or c > 0.99 for c in agent.credences]
 
-def false_consensus(net):
-    all_false = lambda agent : [c < 0.50 for c in agent.credences]
-    return False not in [all_false(agent) for agent in net.agents]
+def finished(net):
+    return False not in [decided(a) for a in net.agents]
 
-def value_from_credence(credence):
-    if credence > 0.99:
-        return 'true'
-    elif credence < 0.5:
-        return 'false'
-    else:
-        raise 'Evaluating consensus on unfinished simulation'
-        exit(1)
-
-def mixed_consensus(net):
-    # For each belief
-    for belief in range(N_CREDENCES):
-        # Look at the first agent's value
-        agent_0_value = value_from_credence(net.agents[0].credences[belief])
-        # For all other agents
-        for agent in net.agents:
-            # If even one other agent does not share that value, there is not
-            # consensus.
-            agent_i_value = value_from_credence(agent.credences[belief])
-            if agent_0_value != agent_i_value:
-                return False
-    # If we made it here, all agents have formed a consensus on all beliefs
-    # (whether or not they chose the true or false hypothesis)
-    return True
-
-
-def polarized(net):
-    # By the time this function is called, we can count on:
-    # 1. All agents having credences < 0.5 or > 0.99
-    # 2. No consensus having been reached
-    # All we need to do is check to see if the A agents have credences below
-    # the proper polar boundary
-    polar_boundary = 0.01 if ANTIUPDATING else 0.5
-    for agent in net.agents:
-        for credence in agent.credences:
-            if credence < 0.5 and credence >= polar_boundary:
-                return False
-    return True
-
-def check_if_finished(net):
-    # First, do a quick check to see if credences are stable yet
-    if unfinished(net):
-        return False, None
-    # Now, credences are possibly stable; evaluate which kind of outcome it is
-    if true_consensus(net):
-        return True, 'True consensus'
-    if false_consensus(net):
-        return True, 'False consensus'
-    if mixed_consensus(net):
-        return True, 'Mixed consensus'
-    if polarized(net):
-        return True, 'Polarization'
-    # This false is called if agents haven't formed a consensus, but are still 
-    # above the polar boundary
-    return False
-    
 def simulate(agents, epsilon=0.01, m_mistrust=2,
         results_file='results.csv', antiupdating=True):
     global EPSILON, MISTRUST, ANTIUPDATING
     EPSILON  = epsilon
     MISTRUST = m_mistrust
     ANTIUPDATING = antiupdating
-
     net = EpistemicNetwork(agents, structure='complete')
-
-    finished = False
-    while not finished:
+    while not finished(net):
         net.update()
-        finished, outcome = check_if_finished(net)
-    net.outcome = outcome
 
     with MUTEX:
         with open(results_file,'a') as f:
