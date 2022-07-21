@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import matplotlib.ticker as mtick
 
-data = pd.read_csv('results_21_July_2022.csv')
+data = pd.read_csv('results.csv')
 
 def getOutcome(credences):
     credences = eval(credences)

@@ -35,7 +35,7 @@ def strictConditionalization(credence, result):
     # Update our credence for B in light of the new evidence with Bayes rule
     pEH    = (pB if result == 'success' else 1-pB) # P(E|H)
     pH     = credence                              # P(H)
-    pEnotH = (pA if result == 'success' else 1-pA) # P(E|~H)
+    pEnotH = 1 - pEH                               # P(E|~H)
     pnotH  = 1 - pH                                # P(~H)
     return (pEH*pH)/(pEH*pH + pEnotH*pnotH)
 

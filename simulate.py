@@ -35,8 +35,8 @@ def weatherall_oconnor_2021_fig_9():
         p.map(run_weatherall_oconnor_2021_fig_9, np.linspace(0.1,4.0,num=50))
 
 def main():
-    #weatherall_oconnor_2021_fig_3()
-    weatherall_oconnor_2021_fig_9()
+    weatherall_oconnor_2021_fig_3()
+    #weatherall_oconnor_2021_fig_9()
 
 if __name__ == '__main__':
     main()
