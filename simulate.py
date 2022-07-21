@@ -13,7 +13,6 @@ def reset_file(filename):
 
 def run_weatherall_oconnor_2021_fig_3(m):
     filename = 'results_and_figures/weatherall_oconnor_2021/fig_3/results.csv'
-    reset_file(filename)
     n_repetitions = 100
     for i in range(n_repetitions):
         print(f'weatherall_oconnor_2021/fig_3: Mistrust {m} run {i}')
@@ -26,7 +25,6 @@ def run_weatherall_oconnor_2021_fig_3(m):
 
 def run_weatherall_oconnor_2021_fig_9(m):
     filename = 'results_and_figures/weatherall_oconnor_2021/fig_9/results.csv'
-    reset_file(filename)
     n_repetitions = 100
     for i in range(n_repetitions):
         print(f'weatherall_oconnor_2021/fig_9: Mistrust {m} run {i}')
@@ -34,12 +32,15 @@ def run_weatherall_oconnor_2021_fig_9(m):
         ep.simulate(agents, m_mistrust=m, results_file=filename,
                     epsilon=0.2, antiupdating=True)
 
-
 def weatherall_oconnor_2021_fig_3():
+    filename = 'results_and_figures/weatherall_oconnor_2021/fig_3/results.csv'
+    reset_file(filename)
     with Pool(THREADS) as p:
         p.map(run_weatherall_oconnor_2021_fig_3, np.linspace(0.1,4.0,num=50))
 
 def weatherall_oconnor_2021_fig_9():
+    filename = 'results_and_figures/weatherall_oconnor_2021/fig_9/results.csv'
+    reset_file(filename)
     with Pool(THREADS) as p:
         p.map(run_weatherall_oconnor_2021_fig_9, np.linspace(0.1,4.0,num=50))
 
