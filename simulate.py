@@ -1,11 +1,19 @@
 import epnets as ep
 import numpy as np
 from multiprocessing import Pool, cpu_count
+import os
 
 THREADS = cpu_count() - 2
 
+def reset_file(filename):
+    if os.path.exists(filename):
+        os.remove(filename)
+    with open(filename, 'w') as f:
+        f.write('m_mistrust,credences')
+
 def run_weatherall_oconnor_2021_fig_3(m):
     filename = 'results_and_figures/weatherall_oconnor_2021/fig_3/results.csv'
+    reset_file(filename)
     n_repetitions = 100
     for i in range(n_repetitions):
         print(f'weatherall_oconnor_2021/fig_3: Mistrust {m} run {i}')
@@ -18,6 +26,7 @@ def run_weatherall_oconnor_2021_fig_3(m):
 
 def run_weatherall_oconnor_2021_fig_9(m):
     filename = 'results_and_figures/weatherall_oconnor_2021/fig_9/results.csv'
+    reset_file(filename)
     n_repetitions = 100
     for i in range(n_repetitions):
         print(f'weatherall_oconnor_2021/fig_9: Mistrust {m} run {i}')
