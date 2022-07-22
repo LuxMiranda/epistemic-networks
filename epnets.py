@@ -272,12 +272,18 @@ def unfinished(net):
     return False
 
 def true_consensus(net):
-    all_true  = lambda agent : [c > 0.99 for c in agent.credences]
-    return False not in [all_true(agent) for agent in net.agents]
+    for agent in net.agents:
+        for credence in agent.credences:
+            if credence <= 0.99:
+                return False
+    return True
 
 def false_consensus(net):
-    all_false = lambda agent : [c < 0.50 for c in agent.credences]
-    return False not in [all_false(agent) for agent in net.agents]
+    for agent in net.agents:
+        for credence in agent.credences:
+            if credence >= 0.5:
+                return False
+    return True
 
 def value_from_credence(credence):
     if credence > 0.99:
@@ -333,7 +339,7 @@ def check_if_finished(net):
         return True, 'Polarization'
     # This false is called if agents haven't formed a consensus, but are still 
     # above the polar boundary
-    return False, None
+    return False, 'Transient polarization'
 
 def simulate(agents, epsilon=0.01, m_mistrust=2,
         results_file='results.csv', antiupdating=True):
@@ -343,10 +349,17 @@ def simulate(agents, epsilon=0.01, m_mistrust=2,
     ANTIUPDATING = antiupdating
     net = EpistemicNetwork(agents, structure='complete')
 
-    finished = False
+    polarized_steps = 0
+    max_polarized_steps = 5
+    finished, outcome = False, None
     while not finished:
         net.update()
         finished, outcome = check_if_finished(net)
+        if outcome == 'Transient polarization':
+            polarized_steps += 1
+        if outcome == 'Transient polarization' and polarized_steps >= max_polarized_steps:
+            finished, outcome = True, 'Polarization'
+
     net.outcome = outcome
 
     with MUTEX:

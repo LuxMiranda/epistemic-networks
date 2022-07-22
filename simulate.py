@@ -22,6 +22,7 @@ def run_weatherall_oconnor_2021_fig_3(m):
         agents += [ep.Agent(n_pulls=50,initial_credences=[1.0, np.random.rand()]) for _ in range(10)]
         ep.simulate(agents, m_mistrust=m, results_file=WOC_FIG3_PATH, 
                     epsilon=0.01, antiupdating=True)
+        print(f'weatherall_oconnor_2021/fig_3: Finish: Mistrust {m} run {i}')
 
 
 def run_weatherall_oconnor_2021_fig_9(m):
@@ -35,16 +36,16 @@ def run_weatherall_oconnor_2021_fig_9(m):
 def weatherall_oconnor_2021_fig_3():
     reset_file(WOC_FIG3_PATH)
     with Pool(THREADS) as p:
-        p.map(weatherall_oconnor_2021_fig_3, np.linspace(0.1,4.0,num=50))
+        p.map(run_weatherall_oconnor_2021_fig_3, np.linspace(0.1,4.0,num=50))
 
 def weatherall_oconnor_2021_fig_9():
     reset_file(WOC_FIG9_PATH)
     with Pool(THREADS) as p:
-        p.map(weatherall_oconnor_2021_fig_9, np.linspace(0.1,4.0,num=50))
+        p.map(run_weatherall_oconnor_2021_fig_9, np.linspace(0.1,4.0,num=50))
 
 def main():
-    weatherall_oconnor_2021_fig_3()
-    #weatherall_oconnor_2021_fig_9()
+    #weatherall_oconnor_2021_fig_3()
+    weatherall_oconnor_2021_fig_9()
 
 if __name__ == '__main__':
     main()
