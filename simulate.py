@@ -22,7 +22,6 @@ def run_weatherall_oconnor_2021_fig_3(m):
         agents += [ep.Agent(n_pulls=50,initial_credences=[1.0, np.random.rand()]) for _ in range(10)]
         ep.simulate(agents, m_mistrust=m, results_file=WOC_FIG3_PATH, 
                     epsilon=0.01, antiupdating=True)
-        print(f'weatherall_oconnor_2021/fig_3: Finish: Mistrust {m} run {i}')
 
 
 def run_weatherall_oconnor_2021_fig_9(m):
