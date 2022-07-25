@@ -103,7 +103,18 @@ def experiment_1():
 
 def run_experiment_2(group, m):
     n_repetitions = 100
-    structure = 'recommender_only' if group == 'rec' else 'complete'
+    structure = 'complete'
+    recommend = 'dissimilar'
+    if group == 'rec':
+        structure = 'recommender_only'
+    elif group == 'cycle':
+        structure = 'cycle'
+    elif group == 'random_rec':
+        structure = 'recommender_only'
+        recommend = 'random'
+    elif group == 'mixed_rec':
+        structure = 'recommender_only'
+        recommend = 'one_similar'
     for i in range(n_repetitions):
         print(f'experiment 2 {group}: Mistrust {m} run {i}')
         agents = ep.make_agents(
@@ -118,7 +129,7 @@ def run_experiment_2(group, m):
                 antiupdating=True,
                 n_recommendations=3,
                 network_structure=structure,
-                recommend='dissimilar'
+                recommend=recommend
                 )
 
 def run_experiment_2_control(m):
@@ -126,6 +137,9 @@ def run_experiment_2_control(m):
 
 def run_experiment_2_rec(m):
     run_experiment_2('rec', m)
+
+def run_experiment_2_cycle(m):
+    run_experiment_2('cycle', m)
 
 def experiment_2_control():
     reset_file(EXP2_PATH('control'))
@@ -137,9 +151,34 @@ def experiment_2_rec():
     with Pool(THREADS) as p:
         p.map(run_experiment_2_rec, np.linspace(0.1, 4.0, num=50))
 
+def experiment_2_cycle():
+    reset_file(EXP2_PATH('cycle'))
+    with Pool(THREADS) as p:
+        p.map(run_experiment_2_cycle, np.linspace(0.1, 4.0, num=50))
+
+def run_experiment_2_randomrec(m):
+    run_experiment_2('random_rec', m)
+
+def experiment_2_randomrec():
+    reset_file(EXP2_PATH('random_rec'))
+    with Pool(THREADS) as p:
+        p.map(run_experiment_2_randomrec, np.linspace(0.1, 4.0, num=50))
+
+def run_experiment_2_mixed_rec(m):
+    run_experiment_2('mixed_rec', m)
+
+def experiment_2_mixed_rec():
+    reset_file(EXP2_PATH('mixed_rec'))
+    with Pool(THREADS) as p:
+        p.map(run_experiment_2_mixed_rec, np.linspace(0.1, 4.0, num=50))
+
+
 def experiment_2():
     #experiment_2_control()
-    experiment_2_rec()
+    #experiment_2_rec()
+    #experiment_2_cycle()
+    #experiment_2_randomrec()
+    experiment_2_mixed_rec()
 
 
 def main():

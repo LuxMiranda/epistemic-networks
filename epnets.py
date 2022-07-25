@@ -157,8 +157,16 @@ class EpistemicNetwork:
         self.n_recommendations = n_recommendations
         if recommend == 'similar':
             self.score = self.score_similarity
+            self.pickScore = self.pickTop
         elif recommend == 'dissimilar':
             self.score = self.score_dissimilarity
+            self.pickScore = self.pickTop
+        elif recommend == 'random':
+            self.score = self.score_random
+            self.pickScore = self.pickTop
+        elif recommend == 'one_similar':
+            self.score = self.score_similarity
+            self.pickScore = self.pickMixed
         self.buildNetwork()
 
     def __str__(self):
@@ -268,11 +276,18 @@ class EpistemicNetwork:
         return [agent_j for agent_j,score in 
             nlargest(self.n_recommendations, scoredAgents, key=itemgetter(1))]
 
+    # Pick the top scored agent, and n_recommendations-1 lowest scored agents
+    def pickMixed(self, scoredAgents):
+        top = max(scoredAgents, key=itemgetter(1))
+        reversedScores = [(agent_j, -1*score) for agent_j, score in scoredAgents]
+        bottoms = self.pickTop(reversedScores)[:-1]
+        return [top[0]] + bottoms
+
     def getRecommendationsFor(self, agent_i):
         # Create a list of agents scored with the recommendation criterion
         scoredAgents = self.scoreAgentsFor(agent_i)
-        # Pick the top n_recommendations of those 
-        return self.pickTop(scoredAgents)
+        # Pick n_recommendations of those 
+        return self.pickScore(scoredAgents)
 
     def addRecommendedLinks(self):
         # For every agent

@@ -17,7 +17,8 @@ plt.figure(figsize=(10,5))
 ### CONTROL DATA ###
 ####################
 
-data_control = pd.read_csv('results-control.csv')
+
+data_control = pd.read_csv('results-cycle.csv')
 data_control = data_control[['m_mistrust','outcome']]
 
 n_repetitions = 100
@@ -27,16 +28,16 @@ data_control['Percent'] = data_control['Count'].apply(lambda x : x / n_repetitio
 
 sns.lineplot(data=data_control[data_control['outcome'].isin(['True consensus'])],
     x='m_mistrust', y='Percent', color=TC_ctl, linestyle='dashed',
-    marker='$♥$', markersize=7,label='Complete: True consensus')
+    marker='$♥$', markersize=7,label='Cycle: True consensus')
 
 ax = sns.lineplot(data=data_control[data_control['outcome'].isin(
     ['Mixed consensus','False consensus'])],
     x='m_mistrust', y='Percent', color=OC_ctl, linestyle='dashed',
-    marker='^', markersize=7,label='Complete: Other consensus')
+    marker='^', markersize=7,label='Cycle: Other consensus')
 
 ax = sns.lineplot(data=data_control[data_control['outcome'].isin(['Polarization'])],
     x='m_mistrust', y='Percent', color=PZ_ctl, linestyle='dashed',
-    marker='X', markersize=7,label='Complete: Polarization')
+    marker='X', markersize=7,label='Cycle: Polarization')
 
 #########################
 ### RECOMMENDER DATA ###
@@ -51,23 +52,23 @@ n_repetitions = 100
 data_rec = data_rec.groupby(['outcome','m_mistrust']).size().reset_index(name='Count')
 data_rec['Percent'] = data_rec['Count'].apply(lambda x : x / n_repetitions)
 
+
 sns.lineplot(data=data_rec[data_rec['outcome'].isin(['True consensus'])],
     x='m_mistrust', y='Percent', color=TC_rec,
-    marker='$♥$', markersize=7,label='MS Recommender: True consensus')
+    marker='$♥$', markersize=7,label='LS Recommender: True consensus')
 
 ax = sns.lineplot(data=data_rec[data_rec['outcome'].isin(
     ['Mixed consensus','False consensus'])],
     x='m_mistrust', y='Percent', color=OC_rec,
-    marker='^', markersize=7,label='MS Recommender: Other consensus')
+    marker='^', markersize=7,label='LS Recommender: Other consensus')
 
 ax = sns.lineplot(data=data_rec[data_rec['outcome'].isin(['Polarization'])],
     x='m_mistrust', y='Percent', color=PZ_rec,
-    marker='X', markersize=7,label='MS Recommender: Polarization')
-
+    marker='X', markersize=7,label='LS Recommender: Polarization')
 
 ax.yaxis.set_major_formatter(mtick.PercentFormatter(1.0))
 plt.ylim(top=1.05)
 plt.xlabel('Mistrust ($m$)')
 plt.ylabel('Percentage of outcomes')
-plt.title('Most-similar recommender vs. Complete network')
+plt.title('Least-similar recommender vs. Cycle network')
 plt.show()
