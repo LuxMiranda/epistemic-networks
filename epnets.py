@@ -137,25 +137,6 @@ class Agent:
 def make_agents(n_agents=50, n_credences=2, n_pulls=50):
     return [Agent(n_credences=n_credences, n_pulls=n_pulls) for _ in range(n_agents)]
 
-# Scientist behavior is implemented in the default agent class
-class Scientist(Agent):
-    def __init__(self, initial_credence=None):
-        Agent.__init__(self, initial_credence=initial_credence)
-        self.type = 'Scientist'
-
-
-# Policymakers work the same as scientists, but don't collect their own
-# evidence.
-class Policymaker(Agent):
-    def __init__(self, initial_credence=None):
-        Agent.__init__(self, initial_credence=initial_credence)
-        self.type = 'Policymaker'
-
-    # Policymakers don't gather evidence
-    def update_on_self(self):
-        pass
- 
-
 class EpistemicNetwork:
     # Initialize with a list of agents and specified structure
     def __init__(self, agents, edges=None, structure=None):
