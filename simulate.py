@@ -74,8 +74,14 @@ def experiment_1_control():
     with Pool(THREADS) as p:
         p.map(run_experiment_1_control, np.linspace(0.1, 4.0, num=50))
 
+def experiment_1_rec():
+    reset_file(EXP1_PATH('rec'))
+    with Pool(THREADS) as p:
+        p.map(run_experiment_1_rec, np.linspace(0.1, 4.0, num=50))
+
 def experiment_1():
-    experiment_1_control()
+    #experiment_1_control()
+    experiment_1_rec()
 
 
 def main():
