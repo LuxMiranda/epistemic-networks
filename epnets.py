@@ -141,7 +141,7 @@ def make_agents(n_agents=50, n_credences=2, n_pulls=50):
 
 class EpistemicNetwork:
     # Initialize with a list of agents and specified structure
-    def __init__(self, agents, edges=None, structure=None, n_recommendations=3):
+    def __init__(self, agents, edges=[], structure=None, n_recommendations=3):
         self.agents    = agents
         self.n_agents  = len(agents)
         self.outcome   = None
@@ -181,9 +181,8 @@ class EpistemicNetwork:
             backward = [(r,l) for (l,r) in forward]
             self.edges = forward + backward
         elif self.structure == 'recommender_only':
-            raise 'Implement me please'
             # Init with recommended links
-            self.regenerateLinks()
+            self.addRecommendedLinks()
         else:
             raise f'Undefined structure: {self.structure}. Try: \
                     complete, cycle, recommender_only, cycle_recommender'

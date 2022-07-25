@@ -7,6 +7,8 @@ THREADS  = cpu_count() - 2
 WOC_FIG3_PATH = 'results_and_figures/weatherall_oconnor_2021/fig_3/results.csv'
 WOC_FIG9_PATH = 'results_and_figures/weatherall_oconnor_2021/fig_9/results.csv'
 
+EXP1_PATH = lambda g : 'results_and_figures/experiment1/results-{}.csv'.format(g)
+
 def reset_file(filename):
     if os.path.exists(filename):
         os.remove(filename)
@@ -42,9 +44,44 @@ def weatherall_oconnor_2021_fig_9():
     with Pool(THREADS) as p:
         p.map(run_weatherall_oconnor_2021_fig_9, np.linspace(0.1,4.0,num=50))
 
+def run_experiment_1(group, m):
+    n_repetitions = 100
+    structure = 'recommender_only' if group == 'rec' else 'complete'
+    for i in range(n_repetitions):
+        print(f'experiment 1 {group}: Mistrust {m} run {i}')
+        agents = ep.make_agents(
+                    n_agents=10, 
+                    n_credences=3, 
+                    n_pulls=10
+                    )
+        ep.simulate(agents, 
+                m_mistrust=m,
+                results_file=EXP1_PATH(group),
+                epsilon=0.1,
+                antiupdating=True,
+                n_recommendations=3,
+                network_structure=structure
+                )
+
+def run_experiment_1_control(m):
+    run_experiment_1('control', m)
+
+def run_experiment_1_rec(m):
+    run_experiment_1('rec', m)
+
+def experiment_1_control():
+    reset_file(EXP1_PATH('control'))
+    with Pool(THREADS) as p:
+        p.map(run_experiment_1_control, np.linspace(0.1, 4.0, num=50))
+
+def experiment_1():
+    experiment_1_control()
+
+
 def main():
     #weatherall_oconnor_2021_fig_3()
-    weatherall_oconnor_2021_fig_9()
+    #weatherall_oconnor_2021_fig_9()
+    experiment_1()
 
 if __name__ == '__main__':
     main()
