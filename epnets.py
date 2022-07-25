@@ -141,7 +141,13 @@ def make_agents(n_agents=50, n_credences=2, n_pulls=50):
 
 class EpistemicNetwork:
     # Initialize with a list of agents and specified structure
-    def __init__(self, agents, edges=[], structure=None, n_recommendations=3):
+    def __init__(self, 
+            agents, 
+            edges=[], 
+            structure=None, 
+            n_recommendations=3,
+            recommend='similar'
+            ):
         self.agents    = agents
         self.n_agents  = len(agents)
         self.outcome   = None
@@ -149,6 +155,10 @@ class EpistemicNetwork:
         self.structure = structure
         self.recommender = 'recommender' in self.structure
         self.n_recommendations = n_recommendations
+        if recommend == 'similar':
+            self.score = self.score_similarity
+        elif recommend == 'dissimilar':
+            self.score = self.score_dissimilarity
         self.buildNetwork()
 
     def __str__(self):
@@ -239,11 +249,13 @@ class EpistemicNetwork:
                     diff = self.distance(i, neighbor)
                     self.agents[i].update_credence(c, nResult, diff, verbose)
 
-    # Compute the score for recommending agent_j to agent_i
-    def score(self, agent_i, agent_j):
-        # TODO Implement other methods
-        # For now just recommend the most like-minded agents
+    # Scores higher for agents more similar
+    def score_similarity(self, agent_i, agent_j):
         return -1*self.distance(agent_i, agent_j)
+
+    # Scores higher for agents more dissimilar
+    def score_dissimilarity(self, agent_i, agent_j):
+        return self.distance(agent_i, agent_j)
 
     # Create a list of agents scored with the recommendation criterion
     def scoreAgentsFor(self, agent_i):
@@ -375,14 +387,15 @@ def check_if_finished(net):
     return False, 'Transient polarization'
 
 def simulate(agents, epsilon=0.01, m_mistrust=2, n_recommendations=2,
-        network_structure='complete',
+        network_structure='complete', recommend='similar',
         results_file='results.csv', antiupdating=True):
     global EPSILON, MISTRUST, ANTIUPDATING
     EPSILON  = epsilon
     MISTRUST = m_mistrust
     ANTIUPDATING = antiupdating
     net = EpistemicNetwork(agents, structure=network_structure,
-                           n_recommendations=n_recommendations)
+                           n_recommendations=n_recommendations,
+                           recommend=recommend)
 
     polarized_steps = 0
     max_polarized_steps = 5
