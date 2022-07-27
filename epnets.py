@@ -23,7 +23,6 @@ ANTIUPDATING = True
 
 MUTEX = Lock()
 
-
 # TODO: Some serious notation rectification
 # P_f(~E) is misleading (it should just be the complement of P_f(E) 
 # The notation between Bayes' rule and Weatherall & O'Connors notation is
@@ -90,6 +89,8 @@ class Agent:
             [(None,None) for _ in range(N_PULLS)] for _ in range(N_CREDENCES)]
         # List of neighbors
         self.neighbors = []
+        # List of permanent neighbors (for use in partial_recommender networks)
+        self.permanent_neighbors = []
         # Agents know their own number (unless they're not in a network,
         # in which case they are just an orphan)
         self.number = '(orphan)'
@@ -146,6 +147,7 @@ class EpistemicNetwork:
             edges=[], 
             structure=None, 
             n_recommendations=3,
+            n_partial_links=0,
             recommend='similar'
             ):
         self.agents    = agents
@@ -155,6 +157,7 @@ class EpistemicNetwork:
         self.structure = structure
         self.recommender = 'recommender' in self.structure
         self.n_recommendations = n_recommendations
+        self.n_partial_links   = n_partial_links
         if recommend == 'similar':
             self.score = self.score_similarity
             self.pickScore = self.pickTop
@@ -200,6 +203,9 @@ class EpistemicNetwork:
             self.edges = forward + backward
         elif self.structure == 'recommender_only':
             # Init with recommended links
+            self.addRecommendedLinks()
+        elif self.structure == 'partial_recommender':
+            self.addPartialLinks()
             self.addRecommendedLinks()
         else:
             raise f'Undefined structure: {self.structure}. Try: \
@@ -250,7 +256,7 @@ class EpistemicNetwork:
     # Have agent i update their credence using neighbor's evidence
     def neighborUpdate(self, i, neighbor, verbose):
         if verbose:
-            print(f"\tUpdating credence on Agent {n}'s results")
+            print(f"\tUpdating credence on Agent {neighbor}'s results")
         for c in range(N_CREDENCES):
             for nPull, nResult in self.agents[neighbor].pullResults[c]:
                 if nPull == 'B':
@@ -265,11 +271,19 @@ class EpistemicNetwork:
     def score_dissimilarity(self, agent_i, agent_j):
         return self.distance(agent_i, agent_j)
 
+    # Random scores
+    def score_random(self, agent_i, agent_j):
+        return np.random.rand()
+
     # Create a list of agents scored with the recommendation criterion
     def scoreAgentsFor(self, agent_i):
         return [(agent_j, self.score(agent_i, agent_j)) 
                 for agent_j in range(self.n_agents) 
-                if agent_j != agent_i]
+                if agent_j != agent_i
+                and agent_j not in self.agents[agent_i].permanent_neighbors]
+                # ^ This last line is important for only recommending agents
+                #   who are not already permanent neighbors in partial 
+                #   recommender networks
     
     # Pick the top n_recommendations of those 
     def pickTop(self, scoredAgents):
@@ -289,6 +303,23 @@ class EpistemicNetwork:
         # Pick n_recommendations of those 
         return self.pickScore(scoredAgents)
 
+    # Get n_partial_links random neighbors of agent_i, who are not agent_i
+    def getRandomNeighbors(self, agent_i):
+        possible_neighbors = [j for j in range(self.n_agents) if j!=agent_i]
+        return [possible_neighbors[np.random.randint(low=0, high=len(possible_neighbors))]
+                for i in range(self.n_partial_links)]
+
+
+    def addPartialLinks(self):
+        # For every agent
+        for agent_i in range(self.n_agents):
+            # Randomly select n_partial_links other agents to add 
+            # as permanent neighbors
+            newNeighbors = self.getRandomNeighbors(agent_i)
+            # Set these as the agent's permanent neighbors
+            self.agents[agent_i].neighbors = newNeighbors
+            self.agents[agent_i].permanent_neighbors = newNeighbors
+
     def addRecommendedLinks(self):
         # For every agent
         for agent_i in range(self.n_agents):
@@ -301,8 +332,10 @@ class EpistemicNetwork:
     def removeLinks(self):
         # For every agent
         for agent_i in range(self.n_agents):
-            # Reset their list of neighbors
-            self.agents[agent_i].neighbors = []
+            # Reset their list of neighbors to the permanent ones
+            # (If it is not a partial recommender network, the list of
+            # permanent neighbors is simply empty [] )
+            self.agents[agent_i].neighbors = self.agents[agent_i].permanent_neighbors
         return
 
     # Run an update round

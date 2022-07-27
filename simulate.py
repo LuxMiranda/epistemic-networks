@@ -188,8 +188,8 @@ def experiment_2():
 ###################
 
 EXP3_PARAMS = {
-    'random' : { 'recommend': 'random',
-                 'sructure' : 'recommender_only',
+    'random' : { 'recommend' : 'random',
+                 'structure' : 'recommender_only',
                   'n_recs'   : 4 }
 }
 
