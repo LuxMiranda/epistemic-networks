@@ -215,9 +215,9 @@ EXP3_PARAMS = {
     'partial3' :
          { 'recommend'  : 'similar',
            'structure'  : 'partial_recommender',
-           'n_recs'     : 7,
-           'n_agents'   : 50,
-           'n_partial_links' : 1 },
+           'n_recs'     : 0,
+           'n_agents'   : 20,
+           'n_partial_links' : 4 },
     'partial4' :
          { 'recommend'  : 'dissimilar',
            'structure'  : 'partial_recommender',
@@ -301,8 +301,8 @@ def experiment_3():
     #experiment_3_MS()
     #experiment_3_partial()
     #experiment_3_partial2()
-    #experiment_3_partial3()
-    experiment_3_partial4()
+    experiment_3_partial3()
+    #experiment_3_partial4()
 
 
 # Note: Dear user,

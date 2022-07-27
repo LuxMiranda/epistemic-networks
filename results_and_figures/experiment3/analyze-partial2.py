@@ -55,20 +55,20 @@ data_rec['Percent'] = data_rec['Count'].apply(lambda x : x / n_repetitions)
 
 sns.lineplot(data=data_rec[data_rec['outcome'].isin(['True consensus'])],
     x='m_mistrust', y='Percent', color=TC_rec,
-    marker='$♥$', markersize=7,label='75/25 Partial MS: True consensus')
+    marker='$♥$', markersize=7,label='75/25 Most-similar: True consensus')
 
 ax = sns.lineplot(data=data_rec[data_rec['outcome'].isin(
     ['Mixed consensus','False consensus'])],
     x='m_mistrust', y='Percent', color=OC_rec,
-    marker='^', markersize=7,label='75/25 Partial MS: Other consensus')
+    marker='^', markersize=7,label='75/25 Most-similar: Other consensus')
 
 ax = sns.lineplot(data=data_rec[data_rec['outcome'].isin(['Polarization'])],
     x='m_mistrust', y='Percent', color=PZ_rec,
-    marker='X', markersize=7,label='75/25 Partial MS: Polarization')
+    marker='X', markersize=7,label='75/25 Most-similar: Polarization')
 
 ax.yaxis.set_major_formatter(mtick.PercentFormatter(1.0))
 plt.ylim(top=1.05)
 plt.xlabel('Mistrust ($m$)')
 plt.ylabel('Percentage of outcomes')
-plt.title('75/25 Partial recommender vs. Random recommender')
+plt.title('75/25 Most-similar recommender vs. Random recommender')
 plt.show()
