@@ -203,6 +203,11 @@ EXP3_PARAMS = {
            'structure'  : 'partial_recommender',
            'n_recs'     : 2,
            'n_partial_links' : 2 },
+    'partial2' :
+         { 'recommend'  : 'similar',
+           'structure'  : 'partial_recommender',
+           'n_recs'     : 3,
+           'n_partial_links' : 1 },
 }
 
 def run_experiment_3(group, m):
@@ -249,10 +254,20 @@ def experiment_3_partial():
     with Pool(THREADS) as p:
         p.map(run_experiment_3_partial, np.linspace(0.1, 4.0, num=50))
 
+def run_experiment_3_partial2(m):
+    run_experiment_3('partial2', m)
+
+def experiment_3_partial2():
+    reset_file(EXP3_PATH('partial2'))
+    with Pool(THREADS) as p:
+        p.map(run_experiment_3_partial2, np.linspace(0.1, 4.0, num=50))
+
+
 def experiment_3():
     #experiment_3_control()
     #experiment_3_MS()
-    experiment_3_partial()
+    #experiment_3_partial()
+    experiment_3_partial2()
 
 
 # Note: Dear user,
