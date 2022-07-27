@@ -191,12 +191,18 @@ EXP3_PARAMS = {
     'random' : 
         { 'recommend'  : 'random',
            'structure' : 'recommender_only',
-           'n_recs'    : 4 },
+           'n_recs'    : 4,
+           'n_partial_links' : 0 },
     'most-similar' : 
         { 'recommend'  : 'similar',
            'structure' : 'recommender_only',
-           'n_recs'    : 4 }
- 
+           'n_recs'    : 4,
+           'n_partial_links' : 0 },
+    'partial' :
+         { 'recommend'  : 'similar',
+           'structure'  : 'partial_recommender',
+           'n_recs'     : 2,
+           'n_partial_links' : 2 },
 }
 
 def run_experiment_3(group, m):
@@ -215,7 +221,8 @@ def run_experiment_3(group, m):
                 antiupdating=True,
                 n_recommendations=EXP3_PARAMS[group]['n_recs'],
                 network_structure=EXP3_PARAMS[group]['structure'],
-                recommend=EXP3_PARAMS[group]['recommend']
+                recommend=EXP3_PARAMS[group]['recommend'],
+                n_partial_links=EXP3_PARAMS[group]['n_partial_links']
                 )
 
 def run_experiment_3_random(m):
@@ -234,11 +241,18 @@ def experiment_3_MS():
     with Pool(THREADS) as p:
         p.map(run_experiment_3_MS, np.linspace(0.1, 4.0, num=50))
 
+def run_experiment_3_partial(m):
+    run_experiment_3('partial', m)
 
+def experiment_3_partial():
+    reset_file(EXP3_PATH('partial'))
+    with Pool(THREADS) as p:
+        p.map(run_experiment_3_partial, np.linspace(0.1, 4.0, num=50))
 
 def experiment_3():
     #experiment_3_control()
-    experiment_3_MS()
+    #experiment_3_MS()
+    experiment_3_partial()
 
 
 # Note: Dear user,

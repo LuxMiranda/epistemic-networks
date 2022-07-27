@@ -319,8 +319,8 @@ class EpistemicNetwork:
             # as permanent neighbors
             newNeighbors = self.getRandomNeighbors(agent_i)
             # Set these as the agent's permanent neighbors
-            self.agents[agent_i].neighbors = newNeighbors
-            self.agents[agent_i].permanent_neighbors = newNeighbors
+            self.agents[agent_i].neighbors = [n for n in newNeighbors]
+            self.agents[agent_i].permanent_neighbors = [n for n in newNeighbors]
 
     def addRecommendedLinks(self):
         # For every agent
@@ -328,7 +328,7 @@ class EpistemicNetwork:
             # Select the n_recommendations recommended agents
             recommendations = self.getRecommendationsFor(agent_i)
             # Create links to them
-            self.agents[agent_i].neighbors = recommendations
+            self.agents[agent_i].neighbors += recommendations
         return
 
     def removeLinks(self):
@@ -337,7 +337,7 @@ class EpistemicNetwork:
             # Reset their list of neighbors to the permanent ones
             # (If it is not a partial recommender network, the list of
             # permanent neighbors is simply empty [] )
-            self.agents[agent_i].neighbors = self.agents[agent_i].permanent_neighbors
+            self.agents[agent_i].neighbors = [n for n in self.agents[agent_i].permanent_neighbors]
         return
 
     # Run an update round
@@ -438,6 +438,7 @@ def check_if_finished(net):
 
 def simulate(agents, epsilon=0.01, m_mistrust=2, n_recommendations=2,
         network_structure='complete', recommend='similar',
+        n_partial_links=0,
         results_file='results.csv', antiupdating=True):
     global EPSILON, MISTRUST, ANTIUPDATING
     EPSILON  = epsilon
@@ -445,7 +446,8 @@ def simulate(agents, epsilon=0.01, m_mistrust=2, n_recommendations=2,
     ANTIUPDATING = antiupdating
     net = EpistemicNetwork(agents, structure=network_structure,
                            n_recommendations=n_recommendations,
-                           recommend=recommend)
+                           recommend=recommend,
+                           n_partial_links=n_partial_links)
 
     polarized_steps = 0
     max_polarized_steps = 5
