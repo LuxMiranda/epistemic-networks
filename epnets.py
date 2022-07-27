@@ -170,6 +170,8 @@ class EpistemicNetwork:
         elif recommend == 'one_similar':
             self.score = self.score_similarity
             self.pickScore = self.pickMixed
+        elif self.recommender:
+            raise Exception('Invalid recommendation strategy. Try: similar, dissimilar, random, one_similar')
         self.buildNetwork()
 
     def __str__(self):

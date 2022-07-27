@@ -188,9 +188,15 @@ def experiment_2():
 ###################
 
 EXP3_PARAMS = {
-    'random' : { 'recommend' : 'random',
-                 'structure' : 'recommender_only',
-                  'n_recs'   : 4 }
+    'random' : 
+        { 'recommend'  : 'random',
+           'structure' : 'recommender_only',
+           'n_recs'    : 4 },
+    'most-similar' : 
+        { 'recommend'  : 'similar',
+           'structure' : 'recommender_only',
+           'n_recs'    : 4 }
+ 
 }
 
 def run_experiment_3(group, m):
@@ -216,14 +222,38 @@ def run_experiment_3_random(m):
     run_experiment_3('random', m)
 
 def experiment_3_control():
-    reset_file(EXP2_PATH('random'))
+    reset_file(EXP3_PATH('random'))
     with Pool(THREADS) as p:
         p.map(run_experiment_3_random, np.linspace(0.1, 4.0, num=50))
 
+def run_experiment_3_MS(m):
+    run_experiment_3('most-similar', m)
+
+def experiment_3_MS():
+    reset_file(EXP3_PATH('most-similar'))
+    with Pool(THREADS) as p:
+        p.map(run_experiment_3_MS, np.linspace(0.1, 4.0, num=50))
+
+
+
 def experiment_3():
-    experiment_3_control()
+    #experiment_3_control()
+    experiment_3_MS()
 
 
+# Note: Dear user,
+#       I haven't actually tried running multiple experiments (or even sub-
+#       experiments) at once. Rather embarrassingly, I'm afraid it wouldn't
+#       work out given epnets.py's usage of global variables and this file's
+#       usage of parallelism. When I tried to re-implement epnets.py to not use
+#       global variables, I maddeningly got a x10 slowdown in simulation time
+#       that I could not for the life of me figure out how to remedy. So, dear
+#       user, this is simply a tragic case of me choosing to value performance
+#       over code readability and usability. Please only run one sub-experiment
+#       at a time (e.g., experiment_3_control()), lest your results go totally
+#       whacky and non-deterministic.
+#       Sincerely, ya girl,
+#       Lux
 def main():
     #weatherall_oconnor_2021_fig_3()
     #weatherall_oconnor_2021_fig_9()
