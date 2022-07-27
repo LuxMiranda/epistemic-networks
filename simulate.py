@@ -11,8 +11,11 @@ THREADS  = cpu_count() - 2
 WOC_FIG3_PATH = 'results_and_figures/weatherall_oconnor_2021/fig_3/results.csv'
 WOC_FIG9_PATH = 'results_and_figures/weatherall_oconnor_2021/fig_9/results.csv'
 
-EXP1_PATH = lambda g : 'results_and_figures/experiment1/results-{}.csv'.format(g)
-EXP2_PATH = lambda g : 'results_and_figures/experiment2/results-{}.csv'.format(g)
+EXP_PATH  = lambda i,g : 'results_and_figures/experiment{}/results-{}.csv'.format(i,g)
+EXP1_PATH = lambda g : EXP_PATH(1,g)
+EXP2_PATH = lambda g : EXP_PATH(2,g)
+EXP3_PATH = lambda g : EXP_PATH(3,g)
+
 
 def reset_file(filename):
     if os.path.exists(filename):
@@ -180,12 +183,53 @@ def experiment_2():
     #experiment_2_randomrec()
     experiment_2_mixed_rec()
 
+#####################
+### EXPERIMENT 3 ###
+###################
+
+EXP3_PARAMS = {
+    'random' : { 'recommend': 'random',
+                 'sructure' : 'recommender_only',
+                  'n_recs'   : 4 }
+}
+
+def run_experiment_3(group, m):
+    n_repetitions = 100
+    for i in range(n_repetitions):
+        print(f'experiment 3 {group}: Mistrust {m} run {i}')
+        agents = ep.make_agents(
+                    n_agents=20, 
+                    n_credences=5, 
+                    n_pulls=10
+                    )
+        ep.simulate(agents, 
+                m_mistrust=m,
+                results_file=EXP3_PATH(group),
+                epsilon=0.2,
+                antiupdating=True,
+                n_recommendations=EXP3_PARAMS[group]['n_recs'],
+                network_structure=EXP3_PARAMS[group]['structure'],
+                recommend=EXP3_PARAMS[group]['recommend']
+                )
+
+def run_experiment_3_random(m):
+    run_experiment_3('random', m)
+
+def experiment_3_control():
+    reset_file(EXP2_PATH('random'))
+    with Pool(THREADS) as p:
+        p.map(run_experiment_3_random, np.linspace(0.1, 4.0, num=50))
+
+def experiment_3():
+    experiment_3_control()
+
 
 def main():
     #weatherall_oconnor_2021_fig_3()
     #weatherall_oconnor_2021_fig_9()
     #experiment_1()
-    experiment_2()
+    #experiment_2()
+    experiment_3()
 
 if __name__ == '__main__':
     main()
