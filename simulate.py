@@ -192,22 +192,38 @@ EXP3_PARAMS = {
         { 'recommend'  : 'random',
            'structure' : 'recommender_only',
            'n_recs'    : 4,
+           'n_agents'  : 20,
            'n_partial_links' : 0 },
     'most-similar' : 
         { 'recommend'  : 'similar',
            'structure' : 'recommender_only',
            'n_recs'    : 4,
+           'n_agents'  : 20,
            'n_partial_links' : 0 },
     'partial' :
          { 'recommend'  : 'similar',
            'structure'  : 'partial_recommender',
            'n_recs'     : 2,
+           'n_agents'  : 20,
            'n_partial_links' : 2 },
     'partial2' :
          { 'recommend'  : 'similar',
            'structure'  : 'partial_recommender',
            'n_recs'     : 3,
+           'n_agents'  : 20,
            'n_partial_links' : 1 },
+    'partial3' :
+         { 'recommend'  : 'similar',
+           'structure'  : 'partial_recommender',
+           'n_recs'     : 7,
+           'n_agents'   : 50,
+           'n_partial_links' : 1 },
+    'partial4' :
+         { 'recommend'  : 'dissimilar',
+           'structure'  : 'partial_recommender',
+           'n_recs'     : 2,
+           'n_agents'   : 20,
+           'n_partial_links' : 2 },
 }
 
 def run_experiment_3(group, m):
@@ -215,7 +231,7 @@ def run_experiment_3(group, m):
     for i in range(n_repetitions):
         print(f'experiment 3 {group}: Mistrust {m} run {i}')
         agents = ep.make_agents(
-                    n_agents=20, 
+                    n_agents=EXP3_PARAMS[group]['n_agents'], 
                     n_credences=5, 
                     n_pulls=10
                     )
@@ -263,11 +279,30 @@ def experiment_3_partial2():
         p.map(run_experiment_3_partial2, np.linspace(0.1, 4.0, num=50))
 
 
+def run_experiment_3_partial3(m):
+    run_experiment_3('partial3', m)
+
+def experiment_3_partial3():
+    reset_file(EXP3_PATH('partial3'))
+    with Pool(THREADS) as p:
+        p.map(run_experiment_3_partial3, np.linspace(0.1, 4.0, num=50))
+
+def run_experiment_3_partial4(m):
+    run_experiment_3('partial4', m)
+
+
+def experiment_3_partial4():
+    reset_file(EXP3_PATH('partial4'))
+    with Pool(THREADS) as p:
+        p.map(run_experiment_3_partial4, np.linspace(0.1, 4.0, num=50))
+
 def experiment_3():
     #experiment_3_control()
     #experiment_3_MS()
     #experiment_3_partial()
-    experiment_3_partial2()
+    #experiment_3_partial2()
+    #experiment_3_partial3()
+    experiment_3_partial4()
 
 
 # Note: Dear user,
