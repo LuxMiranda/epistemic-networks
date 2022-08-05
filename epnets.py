@@ -95,6 +95,8 @@ class Agent:
         # in which case they are just an orphan)
         self.number = '(orphan)'
         self.type   = 'AGENT'
+        # By default, don't pull A. Unless it's important to for recommendations!
+        self.pullA  = False
 
     def __str__(self):
         return f'AGENT {self.number}: {self.type}\n'+\
@@ -121,19 +123,16 @@ class Agent:
             # Test the arm N_PULLS times
             for _ in range(N_PULLS):
                 # Select arm based on credence
-                try:
-                    arm = 'A' if self.credences[i] < 0.5 else 'B'
-                except IndexError:
-                    print('Credences:')
-                    print(self.credences)
-                    exit()
-                if arm == 'B':
+                arm = 'A' if self.credences[i] < 0.5 else 'B'
                 # Pull the arm
+                if arm == 'B' or self.pullA:
                     armSuccessRate = pA if arm == 'A' else pB
                     result = 'success' if np.random.rand() < armSuccessRate else 'fail'
-                    self.update_credence(i, result, 0, verbose)
                     # Update pullResults to share with other agents
                     self.pullResults[i].append((arm,result))
+                    # Update credence if B was pulled
+                    if arm == 'B':
+                        self.update_credence(i, result, 0, verbose)
 
 
 # Makes n_agents default agents
@@ -170,8 +169,16 @@ class EpistemicNetwork:
         elif recommend == 'one_similar':
             self.score = self.score_similarity
             self.pickScore = self.pickMixed
+        elif recommend == 'pull_similar':
+            self.score = self.score_pull_similarity
+            self.pickScore = self.pickTop
+            self.tellAgentsToPullA()
+        elif recommend == 'pull_dissimilar':
+            self.score = self.score_pull_similarity
+            self.pickScore = self.pickTop
+            self.tellAgentsToPullA()
         elif self.recommender:
-            raise Exception('Invalid recommendation strategy. Try: similar, dissimilar, random, one_similar')
+            raise Exception('Invalid recommendation strategy. Try: similar, dissimilar, random, one_similar, pull_similar, pull_dissimilar')
         self.buildNetwork()
 
     def __str__(self):
@@ -248,6 +255,10 @@ class EpistemicNetwork:
              for neighbor in self.agents[i].neighbors:
                 self.neighborUpdate(i, neighbor, verbose)
 
+    def tellAgentsToPullA(self):
+        for i in range(self.n_agents):
+            self.agents[i].pullA = True
+
     # Compute the trust distance between agents i and j
     # as the euclidean distance between their credence vectors
     def distance(self, i, j):
@@ -264,6 +275,26 @@ class EpistemicNetwork:
                 if nPull == 'B':
                     diff = self.distance(i, neighbor)
                     self.agents[i].update_credence(c, nResult, diff, verbose)
+
+    # Scores higher for agents with more similar pull scores
+    def score_pull_similarity(self, agent_i,  agent_j):
+        # If the last result is None, it's the first step. Return random.
+        if self.agents[agent_i].pullResults[0][0][0] == None:
+            return np.random.rand()
+
+        # Get a point for each result that is the same
+        total = 0
+        for belief in range(N_CREDENCES):
+            count  = lambda agent, arm, res : \
+                len([(a,r) for (a,r) in self.agents[agent].pullResults[belief] if (a,r) == (arm,res)])
+            counts = [(count(agent_i, a, r), count(agent_j, a, r))\
+                    for a in 'AB' for r in ['success','failure']]
+            total += np.sum([np.min([i,j]) for (i,j) in counts])
+        return total
+
+    # Opposite of pull similarity
+    def score_pull_dissimilarity(self, agent_i, agent_j):
+        return -1*self.score_pull_similarity(agent_i, agent_j)
 
     # Scores higher for agents more similar
     def score_similarity(self, agent_i, agent_j):

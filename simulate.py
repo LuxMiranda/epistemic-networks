@@ -224,6 +224,12 @@ EXP3_PARAMS = {
            'n_recs'     : 2,
            'n_agents'   : 20,
            'n_partial_links' : 2 },
+    'pull_similar' :
+          { 'recommend'  : 'pull_similar',
+           'structure'  : 'recommender_only',
+           'n_recs'     : 4,
+           'n_agents'   : 20,
+           'n_partial_links' : 0 },
 }
 
 def run_experiment_3(group, m):
@@ -296,13 +302,23 @@ def experiment_3_partial4():
     with Pool(THREADS) as p:
         p.map(run_experiment_3_partial4, np.linspace(0.1, 4.0, num=50))
 
+
+def run_experiment_3_pull_similar(m):
+    run_experiment_3('pull_similar',m)
+
+def experiment_3_pull_similar():
+    reset_file(EXP3_PATH('pull_similar'))
+    with Pool(THREADS) as p:
+        p.map(run_experiment_3_pull_similar, np.linspace(0.1, 4.0, num=50))
+
 def experiment_3():
     #experiment_3_control()
     #experiment_3_MS()
     #experiment_3_partial()
     #experiment_3_partial2()
-    experiment_3_partial3()
+    #experiment_3_partial3()
     #experiment_3_partial4()
+    experiment_3_pull_similar()
 
 
 # Note: Dear user,
