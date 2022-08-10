@@ -157,6 +157,7 @@ class EpistemicNetwork:
         self.recommender = 'recommender' in self.structure
         self.n_recommendations = n_recommendations
         self.n_partial_links   = n_partial_links
+        self.recommend = recommend
         if recommend == 'similar':
             self.score = self.score_similarity
             self.pickScore = self.pickTop
@@ -386,7 +387,9 @@ class EpistemicNetwork:
             print('')
 
     def to_bare_csv_line(self):
-        return '{},{},"{}"\n'.format(MISTRUST, self.outcome,
+        return '{},{},{},{},{},{},"{}"\n'.format(MISTRUST, self.outcome,
+                self.recommend,
+                self.n_agents, self.n_recommendations, self.n_partial_links,
                 [self.agents[i].credences for i in range(self.n_agents)])
 
 # If any agent has a 0.5 <= credence <= 0.99, the simulation is not finished

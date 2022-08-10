@@ -15,13 +15,14 @@ EXP_PATH  = lambda i,g : 'results_and_figures/experiment{}/results-{}.csv'.forma
 EXP1_PATH = lambda g : EXP_PATH(1,g)
 EXP2_PATH = lambda g : EXP_PATH(2,g)
 EXP3_PATH = lambda g : EXP_PATH(3,g)
+EXP4_PATH = lambda g : EXP_PATH(4,g)
 
 
 def reset_file(filename):
     if os.path.exists(filename):
         os.remove(filename)
     with open(filename, 'w') as f:
-        f.write('m_mistrust,outcome,credences\n')
+        f.write('m_mistrust,outcome,recommend,n_agents,n_recommendations,n_partial_links,credences\n')
 
 
 ##########################################
@@ -174,15 +175,6 @@ def experiment_2_mixed_rec():
     reset_file(EXP2_PATH('mixed_rec'))
     with Pool(THREADS) as p:
         p.map(run_experiment_2_mixed_rec, np.linspace(0.1, 4.0, num=50))
-
-
-def experiment_2():
-    #experiment_2_control()
-    #experiment_2_rec()
-    #experiment_2_cycle()
-    #experiment_2_randomrec()
-    experiment_2_mixed_rec()
-
 #####################
 ### EXPERIMENT 3 ###
 ###################
@@ -328,6 +320,63 @@ def experiment_3_pull_dissimilar():
         p.map(run_experiment_3_pull_dissimilar, np.linspace(0.1, 4.0, num=50))
 
 
+##################
+## EXPERIMENT 4 ##
+##################
+
+EXP4_PARAMS = {
+    'vary_n_recs' : 
+    {      'structure' : 'recommender_only',
+           'n_recs'    : 4,
+           'n_agents'  : 20,
+           'n_partial_links' : 0 },
+}
+
+def run_experiment_4(group, m):
+    n_repetitions = 100
+    for recommend in ['random','similar']:
+        for n_recs in [2,4,6,8,10]:
+            for i in range(n_repetitions):
+                print(f'experiment 4 {group}: Mistrust {m} run {i}')
+                agents = ep.make_agents(
+                            n_agents=EXP4_PARAMS[group]['n_agents'], 
+                            n_credences=5, 
+                            n_pulls=10
+                            )
+                ep.simulate(agents, 
+                        m_mistrust=m,
+                        results_file=EXP4_PATH(group),
+                        epsilon=0.2,
+                        antiupdating=True,
+                        n_recommendations=n_recs,
+                        network_structure=EXP4_PARAMS[group]['structure'],
+                        recommend=recommend,
+                        n_partial_links=EXP4_PARAMS[group]['n_partial_links']
+                        )
+
+
+def run_experiment_4_vary_n_recs(m):
+    run_experiment_4('vary_n_recs',m)
+
+def experiment_4_vary_n_recs():
+    reset_file(EXP4_PATH('vary_n_recs'))
+    with Pool(THREADS) as p:
+        p.map(run_experiment_4_vary_n_recs, np.linspace(0.1, 3.0, num=30))
+
+############
+### MAIN ###
+############
+
+def experiment_1():
+    #experiment_1_control()
+    experiment_1_rec()
+
+def experiment_2():
+    #experiment_2_control()
+    #experiment_2_rec()
+    #experiment_2_cycle()
+    #experiment_2_randomrec()
+    experiment_2_mixed_rec()
 
 def experiment_3():
     #experiment_3_control()
@@ -339,6 +388,8 @@ def experiment_3():
     #experiment_3_pull_similar()
     experiment_3_pull_dissimilar()
 
+def experiment_4():
+    experiment_4_vary_n_recs()
 
 # Note: Dear user,
 #       I haven't actually tried running multiple experiments (or even sub-
@@ -358,7 +409,8 @@ def main():
     #weatherall_oconnor_2021_fig_9()
     #experiment_1()
     #experiment_2()
-    experiment_3()
+    #experiment_3()
+    experiment_4()
 
 if __name__ == '__main__':
     main()
