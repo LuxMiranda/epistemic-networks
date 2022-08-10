@@ -1,25 +1,43 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import matplotlib.ticker as mtick
+import numpy as np
 
-n_repetitions = 25
+n_repetitions = 100
 
-#data = pd.read_csv('results-vary_n_agents.csv')
-#
-#data = data[data['recommend'].isin(['random'])]
-#
-#data = data.groupby(['outcome','m_mistrust','n_agents']).size().reset_index(name='Count')
-#data['Percent'] = data['Count'].apply(lambda x : x / n_repetitions)
-#
-#data = data[data['outcome'].isin(['Polarization'])]
-#
-#ax = sns.lineplot(data=data, x='m_mistrust',y='Percent',hue='n_agents', style='n_agents', markers=True, dashes=False, linewidth=4)
-#ax.set_xlim((0,3))
-#plt.show()
-#
+
+data = pd.read_csv('results-vary_n_agents.csv')
+
+data = data[data['recommend'].isin(['random'])]
+
+data = data.groupby(['outcome','m_mistrust','n_agents']).size().reset_index(name='Count')
+data['Percent'] = data['Count'].apply(lambda x : x / n_repetitions)
+
+data = data[data['outcome'].isin(['Polarization'])]
+
+
+null_data = [['Polarization',m,a] for m in np.linspace(0.1,1.0,num=10) for a in [4,12,20,32,56]]
+null_data = pd.DataFrame(null_data, columns=['outcome','m_mistrust','n_agents'])
+
+data = pd.merge(data, null_data, how='outer')
+data = data.fillna(0)
+
+sns.set_theme(style='white', font='serif')
+fig, ax = plt.subplots(figsize=(6,3))
+ax = sns.lineplot(data=data, x='m_mistrust',y='Percent',hue='n_agents',linewidth=4)
+ax.yaxis.set_major_formatter(mtick.PercentFormatter(1.0))
+ax.set_xlim((0,3))
+
+ax.legend(title="# of agents")
+
+plt.xlabel('Mistrust (m)')
+plt.ylabel('Probability of polarization')
+plt.subplots_adjust(left=0.15,bottom=0.174)
+sns.despine()
+plt.savefig('RandomVariedAgents.pdf')
 
 ###
-
 
 data = pd.read_csv('results-vary_n_agents.csv')
 
@@ -30,6 +48,17 @@ data['Percent'] = data['Count'].apply(lambda x : x / n_repetitions)
 
 data = data[data['outcome'].isin(['Polarization'])]
 
-ax = sns.lineplot(data=data, x='m_mistrust',y='Percent',hue='n_agents', style='n_agents', markers=True, dashes=False, linewidth=4)
+sns.set_theme(style='white', font='serif')
+fig, ax = plt.subplots(figsize=(6,3))
+ax = sns.lineplot(data=data, x='m_mistrust',y='Percent',hue='n_agents',linewidth=4)
+ax.yaxis.set_major_formatter(mtick.PercentFormatter(1.0))
 ax.set_xlim((0,3))
-plt.show()
+
+
+ax.legend(title="# of agents")
+
+plt.xlabel('Mistrust (m)')
+plt.ylabel('Probability of polarization')
+plt.subplots_adjust(left=0.15,bottom=0.174)
+sns.despine()
+plt.savefig('MostSimilarVariedAgents.pdf')
