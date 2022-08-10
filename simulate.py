@@ -382,7 +382,7 @@ def run_experiment_4_vary_n_agents(m):
                         results_file=EXP4_PATH('vary_n_agents'),
                         epsilon=0.2,
                         antiupdating=True,
-                        n_recommendations=n_agents/4,
+                        n_recommendations=2*np.round(np.log(n_agents)),
                         network_structure='recommender_only',
                         recommend=recommend,
                         n_partial_links=0
