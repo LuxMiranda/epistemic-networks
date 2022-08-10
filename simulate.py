@@ -2,6 +2,7 @@ import epnets as ep
 import numpy as np
 from multiprocessing import Pool, cpu_count
 import os
+from tqdm import tqdm
 
 ###########################
 ### GLOBAL DEFINITIONS ###
@@ -332,12 +333,15 @@ EXP4_PARAMS = {
            'n_partial_links' : 0 },
 }
 
+
+EXP4_PBAR = tqdm(total=2*5*100*30,ascii=" ▖▘▝▗▚▞█")
+
 def run_experiment_4(group, m):
     n_repetitions = 100
     for recommend in ['random','similar']:
         for n_recs in [2,4,6,8,10]:
             for i in range(n_repetitions):
-                print(f'experiment 4 {group}: Mistrust {m} run {i}')
+                EXP4_PBAR.update(1)
                 agents = ep.make_agents(
                             n_agents=EXP4_PARAMS[group]['n_agents'], 
                             n_credences=5, 
@@ -390,6 +394,7 @@ def experiment_3():
 
 def experiment_4():
     experiment_4_vary_n_recs()
+    EXP4_PBAR.close()
 
 # Note: Dear user,
 #       I haven't actually tried running multiple experiments (or even sub-
