@@ -325,6 +325,8 @@ def experiment_3_pull_dissimilar():
 ## EXPERIMENT 4 ##
 ##################
 
+EXP4_PBAR = None
+
 EXP4_PARAMS = {
     'vary_n_recs' : 
     {      'structure' : 'recommender_only',
@@ -334,7 +336,6 @@ EXP4_PARAMS = {
 }
 
 
-EXP4_PBAR = tqdm(total=2*5*100*30,ascii=" ▖▘▝▗▚▞█")
 
 def run_experiment_4(group, m):
     n_repetitions = 100
@@ -367,6 +368,36 @@ def experiment_4_vary_n_recs():
     with Pool(THREADS) as p:
         p.map(run_experiment_4_vary_n_recs, np.linspace(0.1, 3.0, num=30))
 
+def run_experiment_4_vary_n_agents(m):
+    n_repetitions = 100
+    for recommend in ['random','similar']:
+        for n_agents in [4,12,20,32,56]:
+            for i in range(n_repetitions):
+                EXP4_PBAR.update(1)
+                agents = ep.make_agents(
+                            n_agents=n_agents,
+                            n_credences=5, 
+                            n_pulls=10
+                            )
+                ep.simulate(agents, 
+                        m_mistrust=m,
+                        results_file=EXP4_PATH('vary_n_agents'),
+                        epsilon=0.2,
+                        antiupdating=True,
+                        n_recommendations=n_agents/4,
+                        network_structure='recommender_only',
+                        recommend=recommend,
+                        n_partial_links=0
+                        )
+
+
+
+def experiment_4_vary_n_agents():
+    reset_file(EXP4_PATH('vary_n_agents'))
+    with Pool(THREADS) as p:
+        p.map(run_experiment_4_vary_n_agents, np.linspace(0.1, 3.0, num=30))
+
+
 ############
 ### MAIN ###
 ############
@@ -393,7 +424,10 @@ def experiment_3():
     experiment_3_pull_dissimilar()
 
 def experiment_4():
-    experiment_4_vary_n_recs()
+    global EXP4_PBAR
+    EXP4_PBAR = tqdm(total=2*5*100*30,ascii=" ▖▘▝▗▚▞█")
+    #exepriment_4_vary_n_recs()
+    experiment_4_vary_n_agents()
     EXP4_PBAR.close()
 
 # Note: Dear user,
