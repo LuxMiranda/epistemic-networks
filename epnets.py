@@ -322,7 +322,7 @@ class EpistemicNetwork:
     # Pick the top n_recommendations of those 
     def pickTop(self, scoredAgents):
         return [agent_j for agent_j,score in 
-            nlargest(self.n_recommendations, scoredAgents, key=itemgetter(1))]
+            nlargest(int(self.n_recommendations), scoredAgents, key=itemgetter(1))]
 
     # Pick the top scored agent, and n_recommendations-1 lowest scored agents
     def pickMixed(self, scoredAgents):

@@ -325,8 +325,6 @@ def experiment_3_pull_dissimilar():
 ## EXPERIMENT 4 ##
 ##################
 
-EXP4_PBAR = None
-
 EXP4_PARAMS = {
     'vary_n_recs' : 
     {      'structure' : 'recommender_only',
@@ -373,7 +371,7 @@ def run_experiment_4_vary_n_agents(m):
     for recommend in ['random','similar']:
         for n_agents in [4,12,20,32,56]:
             for i in range(n_repetitions):
-                EXP4_PBAR.update(1)
+                print(f'Vary_n_agents: {n_agents} agents, {recommend} recs, {m} mistrust, run {i}')
                 agents = ep.make_agents(
                             n_agents=n_agents,
                             n_credences=5, 
@@ -424,11 +422,8 @@ def experiment_3():
     experiment_3_pull_dissimilar()
 
 def experiment_4():
-    global EXP4_PBAR
-    EXP4_PBAR = tqdm(total=2*5*100*30,ascii=" ▖▘▝▗▚▞█")
     #exepriment_4_vary_n_recs()
     experiment_4_vary_n_agents()
-    EXP4_PBAR.close()
 
 # Note: Dear user,
 #       I haven't actually tried running multiple experiments (or even sub-
