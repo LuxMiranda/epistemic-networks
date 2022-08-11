@@ -389,11 +389,39 @@ def run_experiment_4_vary_n_agents(m):
                         )
 
 
-
 def experiment_4_vary_n_agents():
     reset_file(EXP4_PATH('vary_n_agents'))
     with Pool(THREADS) as p:
         p.map(run_experiment_4_vary_n_agents, np.linspace(0.1, 3.0, num=30))
+
+def run_experiment_4_vary_partial_recs(m):
+    n_repetitions = 100
+    for n_partials in [0,1,2,3,4,5,6]:
+        for i in range(n_repetitions):
+            print(f'Vary_n_agents: {n_partials} partial recs, {m} mistrust, run {i}')
+            agents = ep.make_agents(
+                        n_agents=32,
+                        n_credences=5, 
+                        n_pulls=10
+                        )
+            ep.simulate(agents, 
+                    m_mistrust=m,
+                    results_file=EXP4_PATH('vary_partial_recs'),
+                    epsilon=0.2,
+                    antiupdating=True,
+                    n_recommendations=6-n_partials,
+                    network_structure='partial_recommender',
+                    recommend='similar',
+                    n_partial_links=n_partials
+                    )
+
+
+
+def experiment_4_vary_partial_recs():
+    reset_file(EXP4_PATH('vary_partial_recs'))
+    with Pool(THREADS) as p:
+        p.map(run_experiment_4_vary_partial_recs, np.linspace(0.1, 3.0, num=30))
+
 
 
 ############
@@ -423,7 +451,8 @@ def experiment_3():
 
 def experiment_4():
     #exepriment_4_vary_n_recs()
-    experiment_4_vary_n_agents()
+    #experiment_4_vary_n_agents()
+    experiment_4_vary_partial_recs()
 
 # Note: Dear user,
 #       I haven't actually tried running multiple experiments (or even sub-
